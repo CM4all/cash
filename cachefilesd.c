@@ -99,6 +99,7 @@ static struct object **cullready;
 static unsigned nr_in_build_table;
 static unsigned nr_in_ready_table;
 static int ncullable;
+static bool cull_delayed;
 
 
 static const char *configfile = "/etc/cachefilesd.conf";
@@ -246,6 +247,7 @@ static void sigio(int sig)
 static void sigalrm(int sig)
 {
 	jumpstart_scan = true;
+	cull_delayed = false;
 }
 
 /*****************************************************************************/
@@ -613,11 +615,11 @@ static void cachefilesd(void)
 
 		/* sleep without racing on reap and cull with the signal
 		 * handlers */
-		if (!scan && !reap && !cull) {
+		if (!scan && !reap && !(cull && !cull_delayed)) {
 			if (sigprocmask(SIG_BLOCK, &sigs, &osigs) < 0)
 				oserror("Unable to block signals");
 
-			if (!reap && !cull) {
+			if (!reap && !stop && !jumpstart_scan) {
 				if (ppoll(pollfds, 1, NULL, &osigs) < 0 &&
 				    errno != EINTR)
 					oserror("Unable to suspend process");
@@ -644,7 +646,7 @@ static void cachefilesd(void)
 			if (cull) {
 				if (nr_in_ready_table > 0)
 					cull_objects();
-				else if (nr_in_build_table == 0)
+				else if (nr_in_build_table == 0 && !cull_delayed)
 					jumpstart_scan = true;
 			}
 
@@ -1364,6 +1366,7 @@ static void decant_cull_table(void)
 
 	/* if nothing there, scan again in a short while */
 	if (nr_in_build_table == 0) {
+		cull_delayed = true;
 		signal(SIGALRM, sigalrm);
 		alarm(30);
 		return;
