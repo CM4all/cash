@@ -21,6 +21,8 @@ The cachefilesd daemon manages the caching files and directory that are that
 are used by network file systems such a AFS and NFS to do persistent caching to
 the local disk.
 
+%define docdir %{_docdir}/cachefilesd
+
 %prep
 %setup -q
 
@@ -33,21 +35,28 @@ PIE="-fpie"
 export PIE
 CFLAGS="`echo $RPM_OPT_FLAGS $ARCH_OPT_FLAGS $PIE`"
 
-make all CFLAGS="$CFLAGS"
+make all \
+	ETCDIR=%{_sysconfdir} \
+	SBINDIR=%{_sbindir} \
+	MANDIR=%{_mandir} \
+	CFLAGS="-Wall $RPM_OPT_FLAGS -Werror"
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}/sbin
+mkdir -p %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_unitdir}
 mkdir -p %{buildroot}%{_mandir}/{man5,man8}
-mkdir -p %{buildroot}/usr/share/doc/%{name}-%{version}
-mkdir -p %{buildroot}/usr/share/doc/%{name}-selinux-%{version}
+mkdir -p %{buildroot}%{docdir}
 mkdir -p %{buildroot}%{_localstatedir}/cache/fscache
-make DESTDIR=%{buildroot} install
+make DESTDIR=%{buildroot} install \
+	ETCDIR=%{_sysconfdir} \
+	SBINDIR=%{_sbindir} \
+	MANDIR=%{_mandir} \
+	CFLAGS="-Wall $RPM_OPT_FLAGS -Werror"
 
 install -m 644 cachefilesd.conf %{buildroot}%{_sysconfdir}
 install -m 644 cachefilesd.service %{buildroot}%{_unitdir}/cachefilesd.service
-install -m 644 selinux/move-cache.txt %{buildroot}/usr/share/doc/%{name}-%{version}/
+install -m 644 selinux/move-cache.txt %{buildroot}%{docdir}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -81,7 +90,7 @@ fi
 %doc selinux/*.if
 %doc selinux/*.te
 %config(noreplace) %{_sysconfdir}/cachefilesd.conf
-/sbin/*
+%{_sbindir}/*
 %{_unitdir}/*
 %{_mandir}/*/*
 %{_localstatedir}/cache/fscache
@@ -132,13 +141,13 @@ fi
 * Mon Jul 2 2007 David Howells <dhowells@redhat.com> 0.8-16
 - Use stat64/fstatat64 to avoid EOVERFLOW errors from the kernel on large files.
 
-* Tue Nov 15 2006 David Howells <dhowells@redhat.com> 0.8-15
+* Tue Nov 14 2006 David Howells <dhowells@redhat.com> 0.8-15
 - Made cachefilesd ask the kernel whether cullable objects are in use and omit
   them from the cull table if they are.
 - Made the size of cachefilesd's culling tables configurable.
 - Updated the manual pages.
 
-* Mon Nov 14 2006 David Howells <dhowells@redhat.com> 0.8-14
+* Mon Nov 13 2006 David Howells <dhowells@redhat.com> 0.8-14
 - Documented SELinux interaction.
 
 * Fri Nov 10 2006 David Howells <dhowells@redhat.com> 0.8-11
@@ -170,7 +179,7 @@ fi
 - Added postun and preun rules so cachefilesd is stopped
   and started when the rpm is updated or removed.
 
-* Tue Aug  7 2006 Jesse Keating <jkeating@redhat.com> 0.4-2
+* Tue Aug  8 2006 Jesse Keating <jkeating@redhat.com> 0.4-2
 - require /sbin/chkconfig not /usr/bin/chkconfig
 
 * Tue Aug  1 2006 David Howells <dhowells@redhat.com> 0.4-1
