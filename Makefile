@@ -87,7 +87,7 @@ tarball: $(TARBALL)
 SRCBALL	:= rpmbuild/SOURCES/$(TARBALL)
 
 BUILDID	:= .local
-dist	:= $(word 2,$(shell grep "%dist" /etc/rpm/macros.dist))
+dist	:= $(word 2,$(shell grep -r "^%dist" /etc/rpm /usr/lib/rpm))
 release	:= $(word 2,$(shell grep ^Release: $(SPECFILE)))
 release	:= $(subst %{?dist},$(dist),$(release))
 release	:= $(subst %{?buildid},$(BUILDID),$(release))
