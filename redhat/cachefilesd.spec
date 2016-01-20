@@ -5,7 +5,7 @@ Version:	0.10.5
 Release:	1%{?dist}%{?buildid}
 Summary:	CacheFiles user-space management daemon
 Group:		System Environment/Daemons
-License:	GPLv2
+License:	GPLv2+
 URL:		http://people.redhat.com/~dhowells/fscache/
 Source0:	http://people.redhat.com/dhowells/fscache/cachefilesd-%{version}.tar.bz2
 
