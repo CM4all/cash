@@ -15,7 +15,8 @@ LNS		:= ln -sf
 #
 ###############################################################################
 VERSION		:= $(word 2,$(shell grep "^Version:" $(SPECFILE)))
-TARBALL		:= cachefilesd-$(VERSION).tar.bz2
+TARBALL		:= cachefilesd-$(VERSION).tar
+ZTARBALL	:= $(TARBALL).bz2
 
 ###############################################################################
 #
@@ -74,10 +75,11 @@ distclean: clean
 # Generate a tarball
 #
 ###############################################################################
-$(TARBALL):
-	git archive --prefix=cachefilesd-$(VERSION)/ --format tar -o $(TARBALL) HEAD
+$(ZTARBALL):
+	git archive --prefix=keyutils-$(VERSION)/ --format tar -o $(TARBALL) HEAD
+	bzip2 -9 <$(TARBALL) >$(ZTARBALL)
 
-tarball: $(TARBALL)
+tarball: $(ZTARBALL)
 
 ###############################################################################
 #
@@ -85,6 +87,7 @@ tarball: $(TARBALL)
 #
 ###############################################################################
 SRCBALL	:= rpmbuild/SOURCES/$(TARBALL)
+ZSRCBALL := rpmbuild/SOURCES/$(ZTARBALL)
 
 BUILDID	:= .local
 dist	:= $(word 2,$(shell grep -r "^%dist" /etc/rpm /usr/lib/rpm))
@@ -110,7 +113,8 @@ rpm:
 	chmod ug-s rpmbuild
 	mkdir -p rpmbuild/{SPECS,SOURCES,BUILD,BUILDROOT,RPMS,SRPMS}
 	git archive --prefix=cachefilesd-$(VERSION)/ --format tar -o $(SRCBALL) HEAD
-	rpmbuild -ts $(SRCBALL) --define "_srcrpmdir rpmbuild/SRPMS" $(RPMFLAGS)
+	bzip2 -9 <$(SRCBALL) >$(ZSRCBALL)
+	rpmbuild -ts $(ZSRCBALL) --define "_srcrpmdir rpmbuild/SRPMS" $(RPMFLAGS)
 	rpmbuild --rebuild $(SRPM) $(RPMBUILDDIRS) $(RPMFLAGS)
 
 rpmlint: rpm
