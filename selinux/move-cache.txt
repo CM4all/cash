@@ -12,16 +12,19 @@ location of the new cache, whilst leaving the old location still available for
 caching.  If anything more is required, then it will be necessary to modify the
 policy that is installed.
 
-The sources for the installed policy will be themselves installed by the
-cachefilesd-selinux RPM in:
+Example sources for the installed policy will be themselves installed by the
+cachefilesd RPM in:
 
-	/usr/share/doc/cachefilesd-selinux-*/
+	/usr/share/doc/cachefilesd/
 
 See the files named:
 
 	cachefilesd.te
 	cachefilesd.fc
 	cachefilesd.if
+
+The policy actually used for the defaults, however, is part of the SELinux
+package.
 
 
 ==========================
