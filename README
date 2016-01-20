@@ -364,9 +364,9 @@ data cached therein; nor is it permitted to create new files in the cache.
 
 The policy source files are for reference installed as:
 
-	/usr/share/doc/cachefilesd-*/cachefilesd.te
-	/usr/share/doc/cachefilesd-*/cachefilesd.fc
-	/usr/share/doc/cachefilesd-*/cachefilesd.if
+	/usr/share/doc/cachefilesd/cachefilesd.te
+	/usr/share/doc/cachefilesd/cachefilesd.fc
+	/usr/share/doc/cachefilesd/cachefilesd.if
 
 By default, the cache is located in /var/cache/fscache, but if it is desirable
 that it should be elsewhere, than either the above policy files must be
@@ -376,7 +376,7 @@ location of the cache.
 For instructions on how to add an auxiliary policy to enable the cache to be
 located elsewhere when SELinux is in enforcing mode, please see:
 
-	/usr/share/doc/cachefilesd-*/move-cache.txt
+	/usr/share/doc/cachefilesd/move-cache.txt
 
 When the cachefilesd RPM is installed; alternatively, the document can be found
 in the sources.

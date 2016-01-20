@@ -275,7 +275,7 @@ FURTHER INFORMATION
 
 On the subject of the CacheFiles facility and configuring it:
 
-	/usr/share/doc/cachefilesd-0.5/README
+	/usr/share/doc/cachefilesd/README
 	/usr/share/man/man5/cachefilesd.conf.5.gz
 	/usr/share/man/man8/cachefilesd.8.gz
 
