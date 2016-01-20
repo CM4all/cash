@@ -9,7 +9,6 @@ License:	GPLv2+
 URL:		http://people.redhat.com/~dhowells/fscache/
 Source0:	http://people.redhat.com/dhowells/fscache/cachefilesd-%{version}.tar.bz2
 
-BuildRoot: %{_tmppath}/%{name}-%{version}-root-%(%{__id_u} -n)
 BuildRequires: systemd-units
 Requires(post): systemd-units
 Requires(preun): systemd-units
@@ -21,7 +20,7 @@ The cachefilesd daemon manages the caching files and directory that are that
 are used by network file systems such a AFS and NFS to do persistent caching to
 the local disk.
 
-%define docdir %{_docdir}/cachefilesd
+%global docdir %{_docdir}/cachefilesd
 
 %prep
 %setup -q
@@ -42,11 +41,9 @@ make all \
 	CFLAGS="-Wall $RPM_OPT_FLAGS -Werror"
 
 %install
-rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_unitdir}
 mkdir -p %{buildroot}%{_mandir}/{man5,man8}
-mkdir -p %{buildroot}%{docdir}
 mkdir -p %{buildroot}%{_localstatedir}/cache/fscache
 make DESTDIR=%{buildroot} install \
 	ETCDIR=%{_sysconfdir} \
@@ -56,10 +53,6 @@ make DESTDIR=%{buildroot} install \
 
 install -m 644 cachefilesd.conf %{buildroot}%{_sysconfdir}
 install -m 644 cachefilesd.service %{buildroot}%{_unitdir}/cachefilesd.service
-install -m 644 selinux/move-cache.txt %{buildroot}%{docdir}
-
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 %post
 if [ $1 -eq 1 ] ; then
@@ -82,7 +75,6 @@ if [ $1 -ge 1 ] ; then
 fi
 
 %files
-%defattr(-,root,root)
 %doc README
 %doc howto.txt
 %doc selinux/move-cache.txt
