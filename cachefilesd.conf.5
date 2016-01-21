@@ -75,6 +75,16 @@ amount of a systems resources, which may be undesirable.  Supplying this option
 disables all culling activity.  The cache will keep building up to the limits
 set and won't be shrunk, except by the removal of out-dated cache files.
 .TP
+.B resume_thresholds <blocks> <files>
+This command specifies the amount of blocks or files that the kernel should let
+go of before the daemon should resume from culling table scan suspension.
+.IP
+Scanning to refill the cull table is suspended when all the objects in a cache
+are pinned by a live network filesystem in the kernel and there's nothing to
+cull.
+.IP
+Either value can be "-" to indicate that this threshold should be ignored.
+.TP
 .B debug <mask>
 This command specifies a numeric bitmask to control debugging in the kernel
 module.  The default is zero (all off).  The following values can be OR'd into

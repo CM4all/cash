@@ -114,6 +114,19 @@ set up cache ready for use.  The following script commands are available:
 	entries.  The permissible values are between 12 and 20, the latter
 	indicating 1048576 entries.  The default is 12.
 
+ (*) resume_thresholds <blocks> <files>
+
+	Scanning to refill the cull table is suspended when all the objects in
+	a cache are pinned by a live network filesystem in the kernel and
+	there's nothing available to cull.  Scanning is resumed when the kernel
+	releases sufficient objects that either the number of objects released
+	exceeds the files parameter here or the cumulative i_blocks values
+	exceed the blocks parameter.  Either threshold can be disabled by
+	specifying it as "-".
+
+	The default is to ignore the block threshold and to resume when five or
+	more files have been released.
+
  (*) debug <mask>
 
 	Specify a numeric bitmask to control debugging in the kernel module.
