@@ -31,6 +31,7 @@
 
 #define _GNU_SOURCE
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,9 +66,9 @@ struct object {
 	DIR		*dir;		/* this object's directory (or NULL for data obj) */
 	ino_t		ino;		/* inode number of this object */
 	int		usage;		/* number of users of this object */
-	char		empty;		/* T if directory empty */
-	char		new;		/* T if object new */
-	char		cullable;	/* T if object now cullable */
+	bool		empty;		/* T if directory empty */
+	bool		new;		/* T if object new */
+	bool		cullable;	/* T if object now cullable */
 	objtype_t	type;		/* type of object */
 	time_t		atime;		/* last access time on this object */
 	char		name[1];	/* name of this object */
@@ -81,11 +82,11 @@ static struct object root = {
 };
 
 static int nobjects = 1;
-static int nopendir = 0;
+static int nopendir;
 
 /* current scan point */
 static struct object *scan = &root;
-static int jumpstart_scan = 0;
+static bool jumpstart_scan;
 
 /* ranked order of cullable objects
  * - we have two tables: one we're building and one that's full of ready to be
@@ -97,7 +98,7 @@ static struct object **cullready;
 
 static int oldest_build = -1;
 static int oldest_ready = -1;
-static int ncullable = 0;
+static int ncullable;
 
 
 static const char *configfile = "/etc/cachefilesd.conf";
@@ -106,8 +107,9 @@ static const char *procfile = "/proc/fs/cachefiles";
 static const char *pidfile = "/var/run/cachefilesd.pid";
 static char *cacheroot, *graveyardpath;
 
-static int xdebug, xnolog, xopenedlog;
-static int stop, reap, cull, nocull; //, statecheck;
+static bool xnolog, xopenedlog;
+static int xdebug;
+static bool nocull, stop, reap, cull;
 static int graveyardfd;
 static unsigned long long brun, bcull, bstop, frun, fcull, fstop;
 
@@ -154,7 +156,7 @@ void __error(int excode, const char *fmt, ...)
 	else {
 		if (!xopenedlog) {
 			openlog("cachefilesd", LOG_PID, LOG_DAEMON);
-			xopenedlog = 1;
+			xopenedlog = true;
 		}
 
 		va_start(va, fmt);
@@ -186,7 +188,7 @@ void __message(int dlevel, int level, const char *fmt, ...)
 		else if (!xnolog) {
 			if (!xopenedlog) {
 				openlog("cachefilesd", LOG_PID, LOG_DAEMON);
-				xopenedlog = 1;
+				xopenedlog = true;
 			}
 
 			va_start(va, fmt);
@@ -225,7 +227,7 @@ static void cull_objects(void);
  */
 static void sigterm(int sig)
 {
-	stop = 1;
+	stop = true;
 }
 
 /*****************************************************************************/
@@ -234,7 +236,7 @@ static void sigterm(int sig)
  */
 static void sigio(int sig)
 {
-	reap = 1;
+	reap = true;
 }
 
 /*****************************************************************************/
@@ -243,7 +245,7 @@ static void sigio(int sig)
  */
 static void sigalrm(int sig)
 {
-	jumpstart_scan = 1;
+	jumpstart_scan = true;
 }
 
 /*****************************************************************************/
@@ -276,7 +278,8 @@ int main(int argc, char *argv[])
 	FILE *config;
 	char *line, *cp;
 	long page_size;
-	int _cachefd, nullfd, opt, loop, open_max, nodaemon = 0;
+	int _cachefd, nullfd, opt, loop, open_max;
+	bool nodaemon = false;
 
 	/* handle help request */
 	if (argc == 2 && strcmp(argv[1], "--help") == 0)
@@ -297,12 +300,12 @@ int main(int argc, char *argv[])
 
 		case 's':
 			/* disable syslog writing */
-			xnolog = 1;
+			xnolog = true;
 			break;
 
 		case 'n':
 			/* don't daemonise */
-			nodaemon = 1;
+			nodaemon = true;
 			break;
 
 		case 'f':
@@ -410,7 +413,7 @@ int main(int argc, char *argv[])
 		/*  allow culling to be disabled */
 		if (memcmp(cp, "nocull", 6) == 0 &&
 		    (!cp[6] || isspace(cp[6]))) {
-			nocull = 1;
+			nocull = true;
 		}
 
 		/* note the cull table size command */
@@ -491,7 +494,7 @@ int main(int argc, char *argv[])
 	/* set up a connection to syslog whilst we still can (the bind command
 	 * will give us our own namespace with no /dev/log */
 	openlog("cachefilesd", LOG_PID, LOG_DAEMON);
-	xopenedlog = 1;
+	xopenedlog = true;
 	info("About to bind cache");
 
 	/* now issue the bind command */
@@ -622,10 +625,10 @@ static void cachefilesd(void)
 		}
 
 		if (nocull) {
-			cull = 0;
+			cull = false;
 		} else {
 			if (jumpstart_scan) {
-				jumpstart_scan = 0;
+				jumpstart_scan = false;
 				if (!stop && !scan) {
 					debug(1, "Refilling cull table");
 					root.usage++;
@@ -637,7 +640,7 @@ static void cachefilesd(void)
 				if (oldest_ready >= 0)
 					cull_objects();
 				else if (oldest_build < 0)
-					jumpstart_scan = 1;
+					jumpstart_scan = true;
 			}
 
 			if (scan)
@@ -662,7 +665,7 @@ static void cachefilesd(void)
 static void reap_graveyard(void)
 {
 	/* set a one-shot notification to catch more graves appearing */
-	reap = 0;
+	reap = false;
 	signal(SIGIO, sigio);
 	if (fcntl(graveyardfd, F_NOTIFY, DN_CREATE) < 0)
 		oserror("unable to set notification on graveyard");
@@ -677,8 +680,9 @@ static void reap_graveyard(void)
 static void reap_graveyard_aux(const char *dirname)
 {
 	struct dirent dirent, *de;
+	bool deleted;
 	DIR *dir;
-	int deleted, ret;
+	int ret;
 
 	if (chdir(dirname) < 0)
 		oserror("chdir failed");
@@ -691,7 +695,7 @@ static void reap_graveyard_aux(const char *dirname)
 		/* removing directory entries may cause us to skip when reading
 		 * them */
 		rewinddir(dir);
-		deleted = 0;
+		deleted = false;
 
 		while (ret = readdir_r(dir, &dirent, &de),
 		       ret == 0 && de != NULL
@@ -705,7 +709,7 @@ static void reap_graveyard_aux(const char *dirname)
 					continue;
 			}
 
-			deleted = 1;
+			deleted = true;
 
 			/* attempt to unlink non-directory files */
 			if (dirent.d_type != DT_DIR) {
@@ -767,7 +771,7 @@ static void read_cache_state(void)
 		}
 
 		if (strcmp(tok, "cull") == 0)
-			cull = strtoul(arg, NULL, 0);
+			cull = (strtoul(arg, NULL, 0) != 0);
 		else if (strcmp(tok, "brun") == 0)
 			brun = strtoull(arg, NULL, 16);
 		else if (strcmp(tok, "bcull") == 0)
@@ -858,7 +862,7 @@ static struct object *create_object(struct object *parent,
 		oserror("Unable to alloc object");
 
 	object->usage = 1;
-	object->new = 1;
+	object->new = true;
 
 	object->ino = st->st_ino;
 	object->atime = st->st_atime;
@@ -1121,7 +1125,7 @@ static void build_cull_table(void)
 	curr = scan;
 
 	if (!curr->dir) {
-		curr->empty = 1;
+		curr->empty = true;
 
 		fd = openat(dirfd(curr->parent->dir), curr->name, O_DIRECTORY);
 		if (fd < 0) {
@@ -1194,7 +1198,7 @@ next:
 	if (!child && errno == ENOENT)
 		goto next;
 
-	curr->empty = 0;
+	curr->empty = false;
 
 	if (!child)
 		oserror("Unable to create object");
@@ -1266,7 +1270,7 @@ next:
 		/* add objects that aren't in use to the cull table */
 		if (!is_object_in_use(dirent.d_name)) {
 			debug(2, "- insert");
-			child->new = 0;
+			child->new = false;
 			insert_into_cull_table(child);
 		}
 		put_object(child);
@@ -1277,7 +1281,7 @@ next:
 	case OBJTYPE_INTERMEDIATE:
 		debug(2, "- descend");
 
-		child->new = 0;
+		child->new = false;
 		scan = child;
 
 		debug(2, "<-- build_cull_table({%s})", curr->name);
@@ -1363,7 +1367,7 @@ static void decant_cull_table(void)
 	/* mark the new entries cullable */
 	for (loop = 0; loop <= oldest_build; loop++) {
 		if (!cullbuild[loop]->cullable) {
-			cullbuild[loop]->cullable = 1;
+			cullbuild[loop]->cullable = true;
 			ncullable++;
 		}
 	}
