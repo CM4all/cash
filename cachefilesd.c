@@ -96,8 +96,8 @@ static unsigned culltable_size = 4096;
 static struct object **cullbuild;
 static struct object **cullready;
 
-static int oldest_build = -1;
-static int oldest_ready = -1;
+static unsigned nr_in_build_table;
+static unsigned nr_in_ready_table;
 static int ncullable;
 
 
@@ -567,10 +567,10 @@ static void open_cache(void)
 	if (fstatfs(graveyardfd, &sfs) < 0)
 		oserror("Unable to stat cache filesystem");
 
-	if (sfs.f_bsize == -1 ||
-	    sfs.f_blocks == -1 ||
-	    sfs.f_bfree == -1 ||
-	    sfs.f_bavail == -1)
+	if (sfs.f_bsize  + 1 == 0 ||
+	    sfs.f_blocks + 1 == 0 ||
+	    sfs.f_bfree  + 1 == 0 ||
+	    sfs.f_bavail + 1 == 0)
 		error("Backing filesystem returns unusable statistics through fstatfs()");
 }
 
@@ -642,16 +642,16 @@ static void cachefilesd(void)
 			}
 
 			if (cull) {
-				if (oldest_ready >= 0)
+				if (nr_in_ready_table > 0)
 					cull_objects();
-				else if (oldest_build < 0)
+				else if (nr_in_build_table == 0)
 					jumpstart_scan = true;
 			}
 
 			if (scan)
 				build_cull_table();
 
-			if (!scan && oldest_ready < 0 && oldest_build >= 0)
+			if (!scan && nr_in_ready_table == 0 && nr_in_build_table > 0)
 				decant_cull_table();
 		}
 
@@ -997,21 +997,21 @@ static void insert_into_cull_table(struct object *object)
 		error("NULL object pointer");
 
 	/* just insert if table is empty */
-	if (oldest_build == -1) {
+	if (nr_in_build_table == 0) {
 		object->usage++;
-		oldest_build = 0;
 		cullbuild[0] = object;
+		nr_in_build_table++;
 		return;
 	}
 
 	/* insert somewhere if table is not full */
-	if (oldest_build < culltable_size - 1) {
+	if (nr_in_build_table < culltable_size) {
 		object->usage++;
-		oldest_build++;
 
 		/* just insert at end if new oldest object */
-		if (object->atime <= cullbuild[oldest_build - 1]->atime) {
-			cullbuild[oldest_build] = object;
+		if (object->atime <= cullbuild[nr_in_build_table - 1]->atime) {
+			cullbuild[nr_in_build_table] = object;
+			nr_in_build_table++;
 			return;
 		}
 
@@ -1019,25 +1019,27 @@ static void insert_into_cull_table(struct object *object)
 		if (object->atime > cullbuild[0]->atime) {
 			memmove(&cullbuild[1],
 				&cullbuild[0],
-				oldest_build * sizeof(cullbuild[0]));
+				nr_in_build_table * sizeof(cullbuild[0]));
 
 			cullbuild[0] = object;
+			nr_in_build_table++;
 			return;
 		}
 
 		/* if only two objects in list then insert between them */
-		if (oldest_build == 2) {
+		if (nr_in_build_table == 2) {
 			cullbuild[2] = cullbuild[1];
 			cullbuild[1] = object;
+			nr_in_build_table++;
 			return;
 		}
 
 		/* insert somewhere in between front and back elements
-		 * of a three object list
+		 * of a three-plus object list
 		 * - oldest_build == #objects_currently_in_list
 		 */
 		y = 1;
-		o = oldest_build - 1;
+		o = nr_in_build_table - 1;
 
 		do {
 			m = (y + o) / 2;
@@ -1051,14 +1053,15 @@ static void insert_into_cull_table(struct object *object)
 
 		memmove(&cullbuild[y + 1],
 			&cullbuild[y],
-			(oldest_build - y) * sizeof(cullbuild[0]));
+			(nr_in_build_table - y) * sizeof(cullbuild[0]));
 
 		cullbuild[y] = object;
+		nr_in_build_table++;
 		return;
 	}
 
 	/* if table is full then insert only if older than newest */
-	if (oldest_build > culltable_size - 1)
+	if (nr_in_build_table > culltable_size)
 		error("Cull table overfull");
 
 	if (object->atime >= cullbuild[0]->atime)
@@ -1125,7 +1128,8 @@ static void build_cull_table(void)
 	struct dirent dirent, *de;
 	struct object *curr, *child;
 	struct stat64 st;
-	int loop, fd;
+	unsigned loop;
+	int fd;
 
 	curr = scan;
 
@@ -1226,45 +1230,41 @@ next:
 				goto next;
 			}
 
-			for (loop = 0; loop <= oldest_ready; loop++)
+			for (loop = 0; loop < nr_in_ready_table; loop++)
 				if (cullready[loop] == child)
 					break;
 
-			if (loop == oldest_ready) {
+			if (loop == nr_in_ready_table - 1) {
 				/* child was oldest object */
-				cullready[oldest_ready] = (void *)(0x6b000000 | __LINE__);
-				oldest_ready--;
+				cullready[--nr_in_ready_table] = (void *)(0x6b000000 | __LINE__);
 				put_object(child);
 				goto removed;
 			}
-			else if (loop < oldest_ready) {
+			else if (loop < nr_in_ready_table - 1) {
 				/* child was somewhere in between */
 				memmove(&cullready[loop],
 					&cullready[loop + 1],
-					(oldest_ready - loop) * sizeof(cullready[0]));
-				cullready[oldest_ready] = (void *)(0x6b000000 | __LINE__);
-				oldest_ready--;
+					(nr_in_ready_table - (loop + 1)) * sizeof(cullready[0]));
+				cullready[--nr_in_ready_table] = (void *)(0x6b000000 | __LINE__);
 				put_object(child);
 				goto removed;
 			}
 
-			for (loop = 0; loop <= oldest_build; loop++)
+			for (loop = 0; loop < nr_in_build_table; loop++)
 				if (cullbuild[loop] == child)
 					break;
 
-			if (loop == oldest_build) {
+			if (loop == nr_in_build_table - 1) {
 				/* child was oldest object */
-				cullbuild[oldest_build] = (void *)(0x6b000000 | __LINE__);
-				oldest_build--;
+				cullbuild[--nr_in_build_table] = (void *)(0x6b000000 | __LINE__);
 				put_object(child);
 			}
-			else if (loop < oldest_build) {
+			else if (loop < nr_in_build_table - 1) {
 				/* child was somewhere in between */
 				memmove(&cullbuild[loop],
 					&cullbuild[loop + 1],
-					(oldest_build - loop) * sizeof(cullbuild[0]));
-				cullbuild[oldest_build] = (void *)(0x6b000000 | __LINE__);
-				oldest_build--;
+					(nr_in_build_table - (loop + 1)) * sizeof(cullbuild[0]));
+				cullbuild[--nr_in_build_table] = (void *)(0x6b000000 | __LINE__);
 				put_object(child);
 			}
 
@@ -1357,20 +1357,20 @@ found_unexpected_object:
  */
 static void decant_cull_table(void)
 {
-	int loop, space, avail, copy, leave, n;
+	unsigned loop, avail, copy, leave, space, n;
 
 	if (scan)
 		error("Can't decant cull table whilst scanning");
 
 	/* if nothing there, scan again in a short while */
-	if (oldest_build < 0) {
+	if (nr_in_build_table == 0) {
 		signal(SIGALRM, sigalrm);
 		alarm(30);
 		return;
 	}
 
 	/* mark the new entries cullable */
-	for (loop = 0; loop <= oldest_build; loop++) {
+	for (loop = 0; loop < nr_in_build_table; loop++) {
 		if (!cullbuild[loop]->cullable) {
 			cullbuild[loop]->cullable = true;
 			ncullable++;
@@ -1378,51 +1378,49 @@ static void decant_cull_table(void)
 	}
 
 	/* if the ready table is empty, copy the whole lot across */
-	if (oldest_ready == -1) {
-		copy = oldest_build + 1;
+	if (nr_in_ready_table == 0) {
+		copy = nr_in_build_table;
 
 		debug(1, "Decant (all %d)", copy);
 
 		n = copy * sizeof(cullready[0]);
 		memcpy(cullready, cullbuild, n);
 		memset(cullbuild, 0x6e, n);
-		oldest_ready = oldest_build;
-		oldest_build = -1;
+		nr_in_ready_table = nr_in_build_table;
+		nr_in_build_table = 0;
 		goto check;
 	}
 
 	/* decant some of the build table if there's space */
-	space = culltable_size - (oldest_ready + 1);
-	if (space <= 0) {
-		if (space < 0)
-			error("Less than zero space in ready table");
+	if (culltable_size < nr_in_ready_table)
+		error("Less than zero space in ready table");
+	space = culltable_size - nr_in_ready_table;
+	if (space == 0)
 		goto check;
-	}
 
 	/* work out how much of the build table we can copy */
-	copy = avail = oldest_build + 1;
+	copy = avail = nr_in_build_table;
 	if (copy > space)
 		copy = space;
 	leave = avail - copy;
 
-	debug(1, "Decant (%d/%d to %d)", copy, avail, space);
+	debug(1, "Decant (%u/%u to %u)", copy, avail, space);
 
 	/* make a hole in the ready table transfer "copy" elements from the end
 	 * of cullbuild (oldest) to the beginning of cullready (youngest)
 	 */
-	n = oldest_ready + 1;
-	memmove(&cullready[copy], &cullready[0], n * sizeof(cullready[0]));
-	oldest_ready += copy;
+	memmove(&cullready[copy], &cullready[0], nr_in_ready_table * sizeof(cullready[0]));
+	nr_in_ready_table += copy;
 
 	memcpy(&cullready[0], &cullbuild[leave], copy * sizeof(cullready[0]));
 	memset(&cullbuild[leave], 0x6b, copy * sizeof(cullbuild[0]));
-	oldest_build = leave - 1;
+	nr_in_build_table = leave;
 
 	if (copy + leave > culltable_size)
 		error("Scan table exceeded (%d+%d)", copy, leave);
 
 check:
-	for (loop = 0; loop < oldest_ready; loop++)
+	for (loop = 0; loop < nr_in_ready_table; loop++)
 		if (((long)cullready[loop] & 0xf0000000) == 0x60000000)
 			abort();
 }
@@ -1499,14 +1497,13 @@ static void cull_objects(void)
 	if (ncullable <= 0)
 		error("Cullable object count is inconsistent");
 
-	if (cullready[oldest_ready]->cullable) {
-		cull_object(cullready[oldest_ready]);
-		cullready[oldest_ready] = (void *)(0x6b000000 | __LINE__);
-		oldest_ready--;
+	if (cullready[nr_in_ready_table - 1]->cullable) {
+		cull_object(cullready[nr_in_ready_table - 1]);
+		cullready[--nr_in_ready_table] = (void *)(0x6b000000 | __LINE__);
 	}
 
 	/* must start refilling the cull table */
-	if (!scan && oldest_build <= culltable_size / 2 + 2) {
+	if (!scan && nr_in_build_table < culltable_size / 2 + 2) {
 		decant_cull_table();
 
 		debug(1, "Refilling cull table");
