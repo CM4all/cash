@@ -11,7 +11,7 @@
 .SH NAME
 cachefilesd \- CacheFiles userspace management daemon
 .SH SYNOPSIS
-.B "cachefilesd [-d]* [-s] [-n] [-f <configfile>]"
+.B "cachefilesd [-d]* [-s] [-n] [-N] [-f <configfile>]"
 .SH DESCRIPTION
 The \fBcachefilesd\fP daemon manages the cache data store that is used by
 network filesystems such a AFS and NFS to cache data locally on disk.
@@ -29,6 +29,9 @@ Don't use syslog.
 .TP
 .B -n
 Don't daemonise.
+.TP
+.B -N
+Disable culling and scanning to fill the cull table.
 .TP
 .BI "-p <pidfile>"
 Use an alternate PID file to /var/run/cachefilesd.pid.

@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
 		version();
 
 	/* parse the arguments */
-	while (opt = getopt(argc, argv, "dsnf:p:v"),
+	while (opt = getopt(argc, argv, "dsnNf:p:v"),
 	       opt != EOF
 	       ) {
 		switch (opt) {
@@ -306,6 +306,11 @@ int main(int argc, char *argv[])
 		case 'n':
 			/* don't daemonise */
 			nodaemon = true;
+			break;
+
+		case 'N':
+			/* disable culling */
+			nocull = true;
 			break;
 
 		case 'f':

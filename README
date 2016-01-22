@@ -130,7 +130,7 @@ cache binds to fscache and the cache becomes live.
 
 The daemon is run as follows:
 
-	/sbin/cachefilesd [-d]* [-s] [-n] [-f <configfile>]
+	/sbin/cachefilesd [-d]* [-s] [-n] [-N] [-f <configfile>]
 
 The flags are:
 
@@ -146,6 +146,10 @@ The flags are:
  (*) -n
 
 	Don't daemonise and go into background.
+
+ (*) -N
+
+	Disable culling and scanning to fill the cull table.
 
  (*) -f <configfile>
 
