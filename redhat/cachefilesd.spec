@@ -1,7 +1,7 @@
 # % define buildid .local
 
 Name:		cachefilesd
-Version:	0.10.6
+Version:	0.10.7
 Release:	1%{?dist}%{?buildid}
 Summary:	CacheFiles user-space management daemon
 Group:		System Environment/Daemons
@@ -88,6 +88,9 @@ fi
 %{_localstatedir}/cache/fscache
 
 %changelog
+* Wed Feb 3 2016 David Howells <dhowells@redhat.com> 0.10.7-1
+- Call setgroups() before calling setuid() (caught by rpmlint).
+
 * Wed Feb 3 2016 David Howells <dhowells@redhat.com> 0.10.6-1
 - Note the correct licence.
 - Handle malformed kernel status correctly.
