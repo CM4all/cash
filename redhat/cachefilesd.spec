@@ -1,7 +1,7 @@
 # % define buildid .local
 
 Name:		cachefilesd
-Version:	0.10.5
+Version:	0.10.6
 Release:	1%{?dist}%{?buildid}
 Summary:	CacheFiles user-space management daemon
 Group:		System Environment/Daemons
@@ -88,6 +88,12 @@ fi
 %{_localstatedir}/cache/fscache
 
 %changelog
+* Wed Feb 3 2016 David Howells <dhowells@redhat.com> 0.10.6-1
+- Note the correct licence.
+- Handle malformed kernel status correctly.
+- Permit culling to be disabled on the command line with the -N flag.
+- Suspend culling when cache space is short and cache objects are pinned.
+
 * Tue Dec 6 2011 David Howells <dhowells@redhat.com> 0.10.5-1
 - Fix systemd service data according to review comments [RH BZ 754811].
 
