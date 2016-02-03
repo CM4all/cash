@@ -47,6 +47,7 @@
 #include <time.h>
 #include <poll.h>
 #include <limits.h>
+#include <grp.h>
 #include <sys/inotify.h>
 #include <sys/time.h>
 #include <sys/vfs.h>
@@ -119,6 +120,8 @@ static int graveyardfd;
 static unsigned long long brun, bcull, bstop, frun, fcull, fstop;
 static unsigned long long b_resume_threshold = ULLONG_MAX;
 static unsigned long long f_resume_threshold = 5;
+
+static const gid_t group_list[0];
 
 #define cachefd 3
 
@@ -350,6 +353,9 @@ int main(int argc, char *argv[])
 		oserror("Unable to get max open files");
 
 	/* become owned by root */
+	if (setgroups(sizeof(group_list) / sizeof(gid_t), group_list) < 0)
+		oserror("Unable to clear the supplementary groups");
+
 	if (setresuid(0, 0, 0) < 0)
 		oserror("Unable to set UID to 0");
 
