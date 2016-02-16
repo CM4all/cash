@@ -1,7 +1,7 @@
 # % define buildid .local
 
 Name:		cachefilesd
-Version:	0.10.7
+Version:	0.10.8
 Release:	1%{?dist}%{?buildid}
 Summary:	CacheFiles user-space management daemon
 Group:		System Environment/Daemons
@@ -55,24 +55,13 @@ install -m 644 cachefilesd.conf %{buildroot}%{_sysconfdir}
 install -m 644 cachefilesd.service %{buildroot}%{_unitdir}/cachefilesd.service
 
 %post
-if [ $1 -eq 1 ] ; then
-    # Initial installation
-    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-fi
+%systemd_post cachefilesd.service
 
 %preun
-if [ $1 -eq 0 ] ; then
-    # Package removal, not upgrade
-    /bin/systemctl --no-reload disable cachefilesd.service > /dev/null 2>&1 || :
-    /bin/systemctl stop cachefilesd.service > /dev/null 2>&1 || :
-fi
+%systemd_preun cachefilesd.service
 
 %postun
-/bin/systemctl daemon-reload >/dev/null 2>&1 || :
-if [ $1 -ge 1 ] ; then
-    # Package upgrade, not uninstall
-    /bin/systemctl try-restart cachefilesd.service >/dev/null 2>&1 || :
-fi
+%systemd_postun_with_restart cachefilesd.service
 
 %files
 %doc README
@@ -88,6 +77,9 @@ fi
 %{_localstatedir}/cache/fscache
 
 %changelog
+* Wed Feb 17 2016 David Howells <dhowells@redhat.com> 0.10.8-1
+- Use systemd interaction macros in specfile installation sections [RH BZ 850053].
+
 * Wed Feb 3 2016 David Howells <dhowells@redhat.com> 0.10.7-1
 - Call setgroups() before calling setuid() (caught by rpmlint).
 
