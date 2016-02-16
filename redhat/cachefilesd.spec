@@ -15,6 +15,8 @@ Requires(preun): systemd-units
 Requires(postun): systemd-units
 Requires: selinux-policy-base >= 3.7.19-5
 
+%define _hardened_build 1
+
 %description
 The cachefilesd daemon manages the caching files and directory that are that
 are used by network file systems such a AFS and NFS to do persistent caching to
@@ -26,19 +28,11 @@ the local disk.
 %setup -q
 
 %build
-%ifarch s390 s390x
-PIE="-fPIE"
-%else
-PIE="-fpie"
-%endif
-export PIE
-CFLAGS="`echo $RPM_OPT_FLAGS $ARCH_OPT_FLAGS $PIE`"
-
 make all \
 	ETCDIR=%{_sysconfdir} \
 	SBINDIR=%{_sbindir} \
 	MANDIR=%{_mandir} \
-	CFLAGS="-Wall $RPM_OPT_FLAGS -Werror"
+	CFLAGS="-Wall -Werror $RPM_OPT_FLAGS $RPM_LD_FLAGS $ARCH_OPT_FLAGS"
 
 %install
 mkdir -p %{buildroot}%{_sbindir}
@@ -80,6 +74,7 @@ install -m 644 cachefilesd.service %{buildroot}%{_unitdir}/cachefilesd.service
 * Wed Feb 17 2016 David Howells <dhowells@redhat.com> 0.10.8-1
 - Use systemd interaction macros in specfile installation sections [RH BZ 850053].
 - Fix the service file to use /usr/sbin/ rather than /sbin/.
+- Turn on RELRO and PIE build hardening in RPM builds.
 
 * Wed Feb 3 2016 David Howells <dhowells@redhat.com> 0.10.7-1
 - Call setgroups() before calling setuid() (caught by rpmlint).
