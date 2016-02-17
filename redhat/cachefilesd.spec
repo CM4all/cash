@@ -79,6 +79,7 @@ install -m 644 cachefilesd.service %{buildroot}%{_unitdir}/cachefilesd.service
 %changelog
 * Wed Feb 17 2016 David Howells <dhowells@redhat.com> 0.10.8-1
 - Use systemd interaction macros in specfile installation sections [RH BZ 850053].
+- Fix the service file to use /usr/sbin/ rather than /sbin/.
 
 * Wed Feb 3 2016 David Howells <dhowells@redhat.com> 0.10.7-1
 - Call setgroups() before calling setuid() (caught by rpmlint).
