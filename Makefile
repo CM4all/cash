@@ -76,7 +76,7 @@ distclean: clean
 #
 ###############################################################################
 $(ZTARBALL):
-	git archive --prefix=keyutils-$(VERSION)/ --format tar -o $(TARBALL) HEAD
+	git archive --prefix=cachefilesd-$(VERSION)/ --format tar -o $(TARBALL) HEAD
 	bzip2 -9 <$(TARBALL) >$(ZTARBALL)
 
 tarball: $(ZTARBALL)

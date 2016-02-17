@@ -1,7 +1,7 @@
 # % define buildid .local
 
 Name:		cachefilesd
-Version:	0.10.8
+Version:	0.10.9
 Release:	1%{?dist}%{?buildid}
 Summary:	CacheFiles user-space management daemon
 Group:		System Environment/Daemons
@@ -71,6 +71,9 @@ install -m 644 cachefilesd.service %{buildroot}%{_unitdir}/cachefilesd.service
 %{_localstatedir}/cache/fscache
 
 %changelog
+* Wed Feb 17 2016 David Howells <dhowells@redhat.com> 0.10.9-1
+- Fix name of directory in Makefile-generated tarball.
+
 * Wed Feb 17 2016 David Howells <dhowells@redhat.com> 0.10.8-1
 - Use systemd interaction macros in specfile installation sections [RH BZ 850053].
 - Fix the service file to use /usr/sbin/ rather than /sbin/.
