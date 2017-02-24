@@ -811,10 +811,11 @@ static void reap_graveyard(void)
  */
 static void reap_graveyard_aux(const char *dirname)
 {
-	struct dirent dirent, *de;
+	struct dirent *de;
+	size_t len;
+	char name[NAME_MAX + 1];
 	bool deleted;
 	DIR *dir;
-	int ret;
 
 	if (chdir(dirname) < 0)
 		oserror("chdir failed");
@@ -829,42 +830,49 @@ static void reap_graveyard_aux(const char *dirname)
 		rewinddir(dir);
 		deleted = false;
 
-		while (ret = readdir_r(dir, &dirent, &de),
-		       ret == 0 && de != NULL
+		while (errno = 0,
+		       de = readdir(dir),
+		       de != NULL
 		       ) {
 			/* ignore "." and ".." */
-			if (dirent.d_name[0] == '.') {
-				if (dirent.d_name[1] == '\0')
+			if (de->d_name[0] == '.') {
+				if (de->d_name[1] == '\0')
 					continue;
-				if (dirent.d_name[1] == '.' ||
-				    dirent.d_name[1] == '\0')
+				if (de->d_name[1] == '.' ||
+				    de->d_name[1] == '\0')
 					continue;
 			}
 
 			deleted = true;
 
 			/* attempt to unlink non-directory files */
-			if (dirent.d_type != DT_DIR) {
-				debug(1, "unlink %s", dirent.d_name);
-				if (unlink(dirent.d_name) == 0)
+			if (de->d_type != DT_DIR) {
+				debug(1, "unlink %s", de->d_name);
+				if (unlink(de->d_name) == 0)
 					continue;
 				if (errno != EISDIR)
 					oserror("Unable to unlink file %s",
-						dirent.d_name);
+						de->d_name);
 			}
 
 			/* recurse into directories */
-			memcpy(&dirent, de, sizeof(dirent));
+			len = strlen(de->d_name) + 1;
+			if (len > sizeof(name)) {
+				errno = ENAMETOOLONG;
+				oserror("Name longer than NAME_MAX \"%s\"",
+					de->d_name);
+			}
+			memcpy(name, de->d_name, len);
 
-			reap_graveyard_aux(dirent.d_name);
+			reap_graveyard_aux(name);
 
 			/* which we then attempt to remove */
-			debug(1, "rmdir %s", dirent.d_name);
-			if (rmdir(dirent.d_name) < 0)
-				oserror("Unable to remove dir %s", dirent.d_name);
+			debug(1, "rmdir %s", name);
+			if (rmdir(name) < 0)
+				oserror("Unable to remove dir %s", name);
 		}
 
-		if (ret < 0)
+		if (errno != 0)
 			oserror("Unable to read dir %s", dirname);
 	} while (deleted);
 
@@ -1273,7 +1281,7 @@ static void begin_building_cull_table(void)
  */
 static bool build_cull_table(void)
 {
-	struct dirent dirent, *de;
+	struct dirent *de;
 	struct object *curr, *child;
 	struct stat64 st;
 	unsigned loop;
@@ -1305,38 +1313,37 @@ static bool build_cull_table(void)
 
 next:
 	/* read the next directory entry */
-	if (readdir_r(curr->dir, &dirent, &de) < 0) {
-		if (errno == ENOENT)
+	errno = 0;
+	de = readdir(curr->dir);
+	if (!de) {
+		if (errno == 0 || errno == ENOENT)
 			goto dir_read_complete;
 		oserror("Unable to read directory");
 	}
 
-	if (de == NULL)
-		goto dir_read_complete;
-
-	if (dirent.d_name[0] == '.') {
-		if (!dirent.d_name[1] ||
-		    (dirent.d_name[1] == '.' && !dirent.d_name[2]))
+	if (de->d_name[0] == '.') {
+		if (!de->d_name[1] ||
+		    (de->d_name[1] == '.' && !de->d_name[2]))
 			goto next;
 	}
 
-	debug(2, "readdir '%s'", dirent.d_name);
+	debug(2, "readdir '%s'", de->d_name);
 
-	switch (dirent.d_type) {
+	switch (de->d_type) {
 	case DT_UNKNOWN:
 	case DT_DIR:
 	case DT_REG:
 		break;
 	default:
-		oserror("readdir returned unsupported type %d", dirent.d_type);
+		oserror("readdir returned unsupported type %d", de->d_type);
 	}
 
 	/* delete any funny looking files */
-	if (memchr("IDSJET+@", dirent.d_name[0], 8) == NULL)
+	if (memchr("IDSJET+@", de->d_name[0], 8) == NULL)
 		goto found_unexpected_object;
 
 	/* see if this object is already known to us */
-	if (fstatat64(dirfd(curr->dir), dirent.d_name, &st, 0) < 0) {
+	if (fstatat64(dirfd(curr->dir), de->d_name, &st, 0) < 0) {
 		if (errno == ENOENT)
 			goto next;
 		oserror("Failed to stat directory");
@@ -1344,14 +1351,14 @@ next:
 
 	if (!S_ISDIR(st.st_mode) &&
 	    (!S_ISREG(st.st_mode) ||
-	     dirent.d_name[0] == 'I' ||
-	     dirent.d_name[0] == 'J' ||
-	     dirent.d_name[0] == '@' ||
-	     dirent.d_name[0] == '+'))
+	     de->d_name[0] == 'I' ||
+	     de->d_name[0] == 'J' ||
+	     de->d_name[0] == '@' ||
+	     de->d_name[0] == '+'))
 		goto found_unexpected_object;
 
 	/* create a representation for this object */
-	child = create_object(curr, dirent.d_name, &st);
+	child = create_object(curr, de->d_name, &st);
 	if (!child && errno == ENOENT)
 		goto next;
 
@@ -1421,7 +1428,7 @@ next:
 		}
 
 		/* add objects that aren't in use to the cull table */
-		if (!is_object_in_use(dirent.d_name)) {
+		if (!is_object_in_use(de->d_name)) {
 			debug(2, "- insert");
 			child->new = false;
 			insert_into_cull_table(child);
@@ -1493,7 +1500,7 @@ dir_read_complete:
 found_unexpected_object:
 	debug(2, "found_unexpected_object");
 
-	destroy_unexpected_object(curr, &dirent);
+	destroy_unexpected_object(curr, de);
 	goto next;
 }
 
