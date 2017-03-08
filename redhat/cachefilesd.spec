@@ -1,7 +1,7 @@
 # % define buildid .local
 
 Name:		cachefilesd
-Version:	0.10.9
+Version:	0.10.10
 Release:	1%{?dist}%{?buildid}
 Summary:	CacheFiles user-space management daemon
 Group:		System Environment/Daemons
@@ -71,6 +71,9 @@ install -m 644 cachefilesd.service %{buildroot}%{_unitdir}/cachefilesd.service
 %{_localstatedir}/cache/fscache
 
 %changelog
+* Wed Mar 7 2017 David Howells <dhowells@redhat.com> 0.10.10-1
+- Stop using readdir_r [RH BZ 1423289].
+
 * Wed Feb 17 2016 David Howells <dhowells@redhat.com> 0.10.9-1
 - Fix name of directory in Makefile-generated tarball.
 
