@@ -15,6 +15,7 @@ class DevCachefiles {
 	FileDescriptor fd;
 
 public:
+	[[nodiscard]]
 	explicit DevCachefiles(FileDescriptor _fd) noexcept
 		:fd(_fd) {}
 
@@ -30,5 +31,6 @@ public:
 		ERROR,
 	};
 
+	[[nodiscard]]
 	CullResult CullFile(std::string_view filename) noexcept;
 };
