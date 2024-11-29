@@ -29,10 +29,13 @@ class Cull::DirectoryRef {
 	Directory &directory;
 
 public:
+	[[nodiscard]]
 	explicit DirectoryRef(Directory &_directory) noexcept
 		:directory(_directory.Ref()) {}
 
 	struct Adopt {};
+
+	[[nodiscard]]
 	DirectoryRef(Adopt, Directory &_directory) noexcept
 		:directory(_directory) {}
 
@@ -43,10 +46,12 @@ public:
 	DirectoryRef(const DirectoryRef &) = delete;
 	DirectoryRef &operator=(const DirectoryRef &) = delete;
 
+	[[nodiscard]]
 	Directory &operator*() const noexcept{
 		return directory;
 	}
 
+	[[nodiscard]]
 	Directory *operator->() const noexcept{
 		return &directory;
 	}
@@ -61,6 +66,7 @@ struct Cull::File final : IntrusiveTreeSetHook<> {
 
 	const std::string name;
 
+	[[nodiscard]]
 	File(Directory &_parent, std::string &&_name,
 	     FileTime _time, const uint_least64_t _size) noexcept
 		:parent(_parent), time(_time), size(_size),
@@ -97,6 +103,7 @@ class Cull::StatItem : public IntrusiveListHook<> {
 	Co::InvokeTask invoke_task;
 
 public:
+	[[nodiscard]]
 	StatItem(Cull &_cull, Directory &_directory, const char *_name) noexcept
 		:cull(_cull), directory(_directory), name(_name) {}
 
@@ -106,6 +113,7 @@ public:
 	}
 
 private:
+	[[nodiscard]]
 	Co::InvokeTask Run(Uring::Queue &uring);
 
 	void OnCompletion(std::exception_ptr error) noexcept {

@@ -140,6 +140,7 @@ class Cull {
 	const FileTime discard_older_than;
 
 public:
+	[[nodiscard]]
 	Cull(EventLoop &_event_loop, Uring::Queue &_uring,
 	     FileDescriptor _dev_cachefiles, FileDescriptor root_fd,
 	     std::size_t _cull_files, uint_least64_t _cull_bytes,
