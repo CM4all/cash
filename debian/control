@@ -1,0 +1,22 @@
+Source: cm4all-cash
+Section: otherosfs
+Priority: extra
+Maintainer: Max Kellermann <max.kellermann@ionos.com>
+Build-Depends: debhelper (>= 13.3~),
+ meson (>= 1.0),
+ g++ (>= 4:12),
+ libc6-dev (>= 2.13),
+ libfmt-dev (>= 9),
+ libcap-dev,
+ libsystemd-dev
+Standards-Version: 4.0.0
+Vcs-Browser: https://github.com/CM4all/cash
+Vcs-Git: git://github.com/CM4all/cash
+
+Package: cm4all-cash
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, systemd-sysv
+Conflicts: cachefilesd
+Description: cachefiles support daemon
+ An alternative implementation of the Linux cachefiles
+ userspace daemon.

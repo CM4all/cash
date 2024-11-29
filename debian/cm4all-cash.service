@@ -1,0 +1,47 @@
+[Unit]
+Description=CM4all Cash
+Conflicts=cachefilesd.service
+
+[Service]
+Type=notify
+ExecStart=/usr/sbin/cm4all-cash
+
+# Need only CAP_SYS_ADMIN to open /dev/cachefiles; this capability
+# will be dropped after startup
+CapabilityBoundingSet=CAP_SYS_ADMIN
+
+WatchdogSec=5m
+
+# This allows the kernel to merge CPU wakeups, the default of 50ns is
+# too fine.
+TimerSlackNSec=10ms
+
+CPUSchedulingPolicy=batch
+IOSchedulingClass=idle
+
+# Resource limits
+MemoryMax=8G
+TasksMax=4
+LimitNOFILE=1048576
+
+# Security settings
+NoNewPrivileges=yes
+DeviceAllow=/dev/cachefiles
+PrivateNetwork=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=noaccess
+ProtectSystem=full
+RestrictAddressFamilies=AF_UNIX
+RestrictFileSystems=ext4
+RestrictNamespaces=yes
+RestrictRealtime=yes
+
+[Install]
+WantedBy=multi-user.target
