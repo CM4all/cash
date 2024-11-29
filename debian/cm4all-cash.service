@@ -48,4 +48,4 @@ RestrictNamespaces=yes
 RestrictRealtime=yes
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=remote-fs.target

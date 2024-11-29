@@ -1,6 +1,7 @@
 cm4all-cash (0.2) unstable; urgency=low
 
   * systemd: add "RequiresMountsFor" and "CacheDirectory"
+  * systemd: change "WantedBy" to "remote-fs.target"
 
  --   
 
