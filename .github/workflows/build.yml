@@ -36,6 +36,7 @@ jobs:
             ccache \
             libfmt-dev \
             libcap-dev \
+            liburing-dev \
             libsystemd-dev
 
       - id: cache-ccache

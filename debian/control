@@ -8,6 +8,7 @@ Build-Depends: debhelper (>= 13.3~),
  libc6-dev (>= 2.13),
  libfmt-dev (>= 9),
  libcap-dev,
+ liburing-dev,
  libsystemd-dev
 Standards-Version: 4.0.0
 Vcs-Browser: https://github.com/CM4all/cash
