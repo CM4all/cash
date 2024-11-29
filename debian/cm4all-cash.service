@@ -1,10 +1,14 @@
 [Unit]
 Description=CM4all Cash
 Conflicts=cachefilesd.service
+RequiresMountsFor=/var/cache/fscache
 
 [Service]
 Type=notify
 ExecStart=/usr/sbin/cm4all-cash
+
+CacheDirectory=fscache
+CacheDirectoryMode=0700
 
 # Need only CAP_SYS_ADMIN to open /dev/cachefiles; this capability
 # will be dropped after startup
