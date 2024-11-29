@@ -32,6 +32,8 @@ You need:
 Optional dependencies:
 
 - `systemd <https://www.freedesktop.org/wiki/Software/systemd/>`__
+- `libcap2 <https://sites.google.com/site/fullycapable/>`__ for
+  dropping unnecessary Linux capabilities
 
 Get the source code::
 
