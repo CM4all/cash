@@ -220,7 +220,6 @@ Cull::ScanDirectory(Directory &directory)
 inline void
 Cull::AddDirectory(Directory &parent, std::string &&name)
 try {
-	//fmt::print(stderr, "dir {:?}\n", name);
 	DirectoryRef directory{DirectoryRef::Adopt{}, *new Directory(parent, OpenPath(parent.fd, name.c_str(), O_DIRECTORY))};
 	ScanDirectory(*directory);
 } catch (...) {
