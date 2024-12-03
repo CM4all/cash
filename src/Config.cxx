@@ -82,6 +82,10 @@ LoadConfigFile(const char *path)
 		else if (command == "nocull"sv) {
 			config.culling_disabled = true;
 			continue;
+		} else if (command == "culltable"sv ||
+			   command == "resume_thresholds"sv) {
+			// ignore (for cachefilesd compatbility)
+			continue;
 		} else
 			config.frun = ParsePercent(value);
 

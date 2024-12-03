@@ -1,6 +1,7 @@
 cm4all-cash (0.3) unstable; urgency=low
 
   * implement option "nocull"
+  * ignore cachefilesd options "culltable", "resume_thresholds"
 
  --   
 
