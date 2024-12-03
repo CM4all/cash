@@ -132,6 +132,7 @@ executable('cm4all-cash',
   'src/Config.cxx',
   'src/Cull.cxx',
   'src/DevCachefiles.cxx',
+  'src/Walk.cxx',
   include_directories: inc,
   dependencies: [
     io_linux_dep,
