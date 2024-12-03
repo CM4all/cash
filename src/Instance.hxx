@@ -16,6 +16,10 @@
 #include "event/systemd/Watchdog.hxx"
 #endif
 
+#include <cstdint>
+
+struct Config;
+
 class Instance {
 	EventLoop event_loop;
 	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnShutdown)};
@@ -32,8 +36,10 @@ class Instance {
 
 	std::optional<Cull> cull;
 
+	const uint_least8_t brun, frun;
+
 public:
-	Instance();
+	explicit Instance(const Config &config);
 	~Instance() noexcept;
 
 	void Run();

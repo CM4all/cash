@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Instance.hxx"
+#include "Config.hxx"
 #include "system/Error.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/Open.hxx"
@@ -34,43 +35,29 @@
 
 using std::string_view_literals::operator""sv;
 
-// TODO hard-coded configuration
-static constexpr unsigned brun = 10, frun = 10;
-
 static UniqueFileDescriptor
-OpenDevCachefiles()
+OpenDevCachefiles(const Config &config)
 {
 	UniqueFileDescriptor fd;
 	if (!fd.Open("/dev/cachefiles", O_RDWR))
 		throw MakeErrno("Failed to open /dev/cachefiles");
 
-	// TODO hard-coded configuration
-	static constexpr const char *configure_cachefiles[] = {
-		"dir /var/cache/fscache",
-		"tag mycache",
-		"brun 10%",
-		"brun 10%",
-		"bcull 7%",
-		"bstop 3%",
-		"frun 10%",
-		"fcull 7%",
-		"fstop 3%",
-		"bind",
-	};
+	for (const auto &line : config.kernel_config)
+		fd.FullWrite(AsBytes(line));
 
-	for (const char *s : configure_cachefiles)
-		fd.FullWrite(AsBytes(std::string_view{s}));
+	fd.FullWrite(AsBytes("bind"sv));
 
 	return fd;
 }
 
 inline
-Instance::Instance()
+Instance::Instance(const Config &config)
+	:brun(config.brun), frun(config.frun)
 {
-	dev_cachefiles.Open(OpenDevCachefiles().Release());
+	dev_cachefiles.Open(OpenDevCachefiles(config).Release());
 	dev_cachefiles.ScheduleRead();
 
-	const auto fscache_fd = OpenPath("/var/cache/fscache", O_DIRECTORY);
+	const auto fscache_fd = OpenPath(config.dir.c_str(), O_DIRECTORY);
 	cache_fd = OpenPath(fscache_fd, "cache", O_DIRECTORY);
 	graveyard_fd = OpenPath(fscache_fd, "graveyard", O_DIRECTORY);
 
@@ -152,7 +139,9 @@ Instance::Run()
 static int
 Run()
 {
-	Instance instance;
+	Instance instance{
+		LoadConfigFile("/etc/cachefilesd.conf"),
+	};
 
 #ifdef HAVE_LIBCAP
 	/* drop all capabilities, we don't need them anymore */

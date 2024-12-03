@@ -128,6 +128,7 @@ configure_file(output: 'config.h', configuration: conf)
 executable('cm4all-cash',
   'src/system/SetupProcess.cxx',
   'src/Main.cxx',
+  'src/Config.cxx',
   'src/Cull.cxx',
   'src/DevCachefiles.cxx',
   include_directories: inc,
@@ -142,3 +143,5 @@ executable('cm4all-cash',
   install: true,
   install_dir: 'sbin',
 )
+
+install_data('cachefilesd.conf', install_dir: get_option('sysconfdir'))
