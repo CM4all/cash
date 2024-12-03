@@ -38,6 +38,8 @@ class Instance {
 
 	const uint_least8_t brun, frun;
 
+	const bool culling_disabled;
+
 public:
 	explicit Instance(const Config &config);
 	~Instance() noexcept;

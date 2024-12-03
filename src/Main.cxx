@@ -52,7 +52,8 @@ OpenDevCachefiles(const Config &config)
 
 inline
 Instance::Instance(const Config &config)
-	:brun(config.brun), frun(config.frun)
+	:brun(config.brun), frun(config.frun),
+	 culling_disabled(config.culling_disabled)
 {
 	dev_cachefiles.Open(OpenDevCachefiles(config).Release());
 	dev_cachefiles.ScheduleRead();
@@ -126,7 +127,7 @@ Instance::OnDevCachefiles([[maybe_unused]] unsigned events) noexcept
 			start_cull = value != "0"sv;
 	}
 
-	if (start_cull && !cull)
+	if (start_cull && !cull && !culling_disabled)
 		StartCull();
 }
 

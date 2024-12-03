@@ -14,6 +14,8 @@ struct Config {
 	std::forward_list<std::string> kernel_config;
 
 	uint_least8_t brun = 10, frun = 10;
+
+	bool culling_disabled = false;
 };
 
 Config

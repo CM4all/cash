@@ -79,6 +79,11 @@ LoadConfigFile(const char *path)
 			config.brun = ParsePercent(value);
 		else if (command == "frun"sv)
 			config.frun = ParsePercent(value);
+		else if (command == "nocull"sv) {
+			config.culling_disabled = true;
+			continue;
+		} else
+			config.frun = ParsePercent(value);
 
 		kernel_config_iterator =
 			config.kernel_config.emplace_after(kernel_config_iterator,
