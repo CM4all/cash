@@ -1,5 +1,6 @@
 cm4all-cash (0.2) unstable; urgency=low
 
+  * open /dev/cachefiles before opening the cache directory
   * systemd: add "RequiresMountsFor" and "CacheDirectory"
   * systemd: change "WantedBy" to "remote-fs.target"
 

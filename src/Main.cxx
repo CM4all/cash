@@ -67,14 +67,14 @@ OpenDevCachefiles()
 inline
 Instance::Instance()
 {
+	dev_cachefiles.Open(OpenDevCachefiles().Release());
+	dev_cachefiles.ScheduleRead();
+
 	const auto fscache_fd = OpenPath("/var/cache/fscache", O_DIRECTORY);
 	cache_fd = OpenPath(fscache_fd, "cache", O_DIRECTORY);
 	graveyard_fd = OpenPath(fscache_fd, "graveyard", O_DIRECTORY);
 
 	// TODO implement graveyeard reaper
-
-	dev_cachefiles.Open(OpenDevCachefiles().Release());
-	dev_cachefiles.ScheduleRead();
 
 	shutdown_listener.Enable();
 }
