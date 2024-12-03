@@ -94,9 +94,9 @@ Instance::StartCull()
 
 	fmt::print(stderr, "Cull: start files={} bytes={}\n", cull_files, cull_bytes);
 
-	cull.emplace(event_loop, uring, dev_cachefiles.GetFileDescriptor(), cache_fd,
+	cull.emplace(event_loop, uring, dev_cachefiles.GetFileDescriptor(),
 		     cull_files, cull_bytes, BIND_THIS_METHOD(OnCullComplete));
-	cull->Start();
+	cull->Start(cache_fd);
 }
 
 inline void

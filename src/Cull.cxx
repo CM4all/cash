@@ -146,13 +146,12 @@ Cull::StatItem::Run(Uring::Queue &uring_)
 }
 
 Cull::Cull(EventLoop &_event_loop, Uring::Queue &_uring,
-	   FileDescriptor _dev_cachefiles, FileDescriptor root_fd,
+	   FileDescriptor _dev_cachefiles,
 	   uint_least64_t _cull_files, std::size_t _cull_bytes,
 	   Callback _callback)
 	:event_loop(_event_loop), uring(_uring),
 	 dev_cachefiles(_dev_cachefiles),
 	 callback(_callback),
-	 root(Directory::RootTag{}, OpenPath(root_fd, ".", O_DIRECTORY)),
 	 cull_files(_cull_files), cull_bytes(_cull_bytes),
 	 discard_older_than(FileTime{time(nullptr)} - DISCARD_OLDER_THAN)
 {
@@ -163,14 +162,13 @@ Cull::~Cull() noexcept
 {
 	files.clear_and_dispose(DeleteDisposer{});
 	stat.clear_and_dispose(DeleteDisposer{});
-
-	assert(root.ref == 1);
 }
 
 void
-Cull::Start()
+Cull::Start(FileDescriptor root_fd)
 {
-	ScanDirectory(root);
+	DirectoryRef root{DirectoryRef::Adopt{}, *new Directory(Directory::RootTag{}, OpenPath(root_fd, ".", O_DIRECTORY))};
+	ScanDirectory(*root);
 }
 
 inline void

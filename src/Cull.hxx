@@ -103,8 +103,6 @@ class Cull {
 	using Callback = BoundMethod<void() noexcept>;
 	const Callback callback;
 
-	Directory root;
-
 	class StatItem;
 	IntrusiveList<StatItem, IntrusiveListBaseHookTraits<StatItem>, IntrusiveListOptions{.constant_time_size=true}> stat;
 
@@ -142,12 +140,12 @@ class Cull {
 public:
 	[[nodiscard]]
 	Cull(EventLoop &_event_loop, Uring::Queue &_uring,
-	     FileDescriptor _dev_cachefiles, FileDescriptor root_fd,
+	     FileDescriptor _dev_cachefiles,
 	     std::size_t _cull_files, uint_least64_t _cull_bytes,
 	     Callback _callback);
 	~Cull() noexcept;
 
-	void Start();
+	void Start(FileDescriptor root_fd);
 
 private:
 	void AddDirectory(Directory &parent, std::string &&name);
