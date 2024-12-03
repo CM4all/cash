@@ -79,6 +79,8 @@ LoadConfigFile(const char *path)
 			config.brun = ParsePercent(value);
 		else if (command == "frun"sv)
 			config.frun = ParsePercent(value);
+		else if (command == "bind"sv)
+			throw std::runtime_error{"'bind' command not permitted"};
 		else if (command == "nocull"sv) {
 			config.culling_disabled = true;
 			continue;
