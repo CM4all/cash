@@ -17,7 +17,19 @@
 #include <fmt/core.h> // TODO
 
 static constexpr std::size_t MAX_FILES = 1024 * 1024;
-static constexpr std::size_t MAX_STAT = 1024 * 1024;
+
+/**
+ * Limit on the number of concurrent statx() system calls.  Scanning
+ * new directories is suspended until we're below #RESUME_STAT.
+ */
+static constexpr std::size_t MAX_STAT = 16 * 1024;
+
+/**
+ * Resume submitting new statx() system calls when the number of
+ * pending calls goes below this number.
+ */
+static constexpr std::size_t RESUME_STAT = 4 * 1024;
+
 static constexpr FileTime DISCARD_OLDER_THAN = std::chrono::hours{120 * 24};
 
 class Walk::StatItem : public IntrusiveListHook<> {
@@ -150,11 +162,11 @@ try {
 inline void
 Walk::OnStatCompletion(StatItem &item) noexcept
 {
-	const bool was_too_many_stat = stat.size() >= MAX_STAT;
+	const bool was_too_many_stat = stat.size() >= RESUME_STAT;
 
 	stat.erase_and_dispose(stat.iterator_to(item), DeleteDisposer{});
 
-	if (was_too_many_stat && stat.size() < MAX_STAT)
+	if (was_too_many_stat && stat.size() < RESUME_STAT)
 		resume_stat.ResumeAll();
 
 	if (stat.empty())
