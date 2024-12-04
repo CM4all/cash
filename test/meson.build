@@ -14,6 +14,7 @@ executable(
 executable(
   'RunCull',
   'RunCull.cxx',
+  '../src/Chdir.cxx',
   '../src/Cull.cxx',
   '../src/DevCachefiles.cxx',
   '../src/Walk.cxx',

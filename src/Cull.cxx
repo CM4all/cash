@@ -3,10 +3,59 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Cull.hxx"
+#include "util/DeleteDisposer.hxx"
 
 #include <cassert>
+#include <memory>
 
 #include <fmt/core.h> // TODO
+
+class Cull::CullFileOperation final : public IntrusiveListHook<>, ChdirWaiter {
+	Cull &cull;
+
+	std::unique_ptr<WalkResult::File> file;
+
+public:
+	CullFileOperation(Cull &_cull, WalkResult::File *_file) noexcept
+		:cull(_cull), file(_file) {}
+
+	void Start() noexcept {
+		cull.chdir.Add(file->parent->fd, *this);
+	}
+
+	// virtual methods from ChdirWaiter
+	void OnChdir(SharedLease lease) noexcept override;
+	void OnChdirError() noexcept override;
+};
+
+void
+Cull::CullFileOperation::OnChdir(SharedLease lease) noexcept
+{
+	switch (cull.dev_cachefiles.CullFile(file->name)) {
+	case DevCachefiles::CullResult::SUCCESS:
+		++cull.n_deleted_files;
+		cull.n_deleted_bytes += file->size;
+		break;
+
+	case DevCachefiles::CullResult::BUSY:
+		++cull.n_busy;
+		break;
+
+	case DevCachefiles::CullResult::ERROR:
+		++cull.n_errors;
+		break;
+	}
+
+	lease = {};
+	cull.OperationFinished(*this);
+}
+
+void
+Cull::CullFileOperation::OnChdirError() noexcept
+{
+	++cull.n_errors;
+	cull.OperationFinished(*this);
+}
 
 static DevCachefiles::CullResult
 CullFile(DevCachefiles &dev_cachefiles,
@@ -19,13 +68,14 @@ CullFile(DevCachefiles &dev_cachefiles,
 	return dev_cachefiles.CullFile(filename);
 }
 
-Cull::Cull(Uring::Queue &_uring,
+Cull::Cull(EventLoop &event_loop, Uring::Queue &_uring,
 	   FileDescriptor _dev_cachefiles,
 	   uint_least64_t _cull_files, std::size_t _cull_bytes,
 	   Callback _callback)
 	:dev_cachefiles(_dev_cachefiles),
 	 callback(_callback),
-	 walk(_uring, _cull_files, _cull_bytes, *this)
+	 walk(_uring, _cull_files, _cull_bytes, *this),
+	 chdir(event_loop)
 {
 	assert(callback);
 }
@@ -51,34 +101,41 @@ Cull::OnWalkFinished(WalkResult &&result) noexcept
 	fmt::print(stderr, "Cull: delete {} files, {} bytes\n",
 		   result.files.size(), result.total_bytes);
 
-	std::size_t n_deleted_files = 0, n_busy = 0;
-	uint_least64_t n_deleted_bytes = 0, n_errors = 0;
-
 	result.files.clear_and_dispose([&](WalkResult::File *file){
 #ifndef NDEBUG
 		result.total_bytes -= file->size;
 #endif
 
-		switch (CullFile(dev_cachefiles, file->parent->fd, file->name.c_str())) {
-		case DevCachefiles::CullResult::SUCCESS:
-			++n_deleted_files;
-			n_deleted_bytes += file->size;
-			break;
-
-		case DevCachefiles::CullResult::BUSY:
-			++n_busy;
-			break;
-
-		case DevCachefiles::CullResult::ERROR:
-			++n_errors;
-		}
-
-		delete file;
+		auto *op = new CullFileOperation(*this, file);
+		new_operations.push_back(*op);
 	});
-
-	fmt::print(stderr, "Cull: deleted {} files, {} bytes; {} in use; {} errors\n", n_deleted_files, n_deleted_bytes, n_busy, n_errors);
 
 	assert(result.total_bytes == 0);
 
+	if (operations.empty() && new_operations.empty()) {
+		Finish();
+		return;
+	}
+
+	new_operations.clear_and_dispose([this](auto *op){
+		operations.push_back(*op);
+		op->Start();
+	});
+}
+
+void
+Cull::OperationFinished(CullFileOperation &op) noexcept
+{
+	assert(!operations.empty());
+
+	operations.erase_and_dispose(operations.iterator_to(op), DeleteDisposer{});
+	if (operations.empty() && new_operations.empty())
+		Finish();
+}
+
+void
+Cull::Finish() noexcept
+{
+	fmt::print(stderr, "Cull: deleted {} files, {} bytes; {} in use; {} errors\n", n_deleted_files, n_deleted_bytes, n_busy, n_errors);
 	callback();
 }

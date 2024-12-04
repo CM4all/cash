@@ -4,6 +4,7 @@ cm4all-cash (0.3) unstable; urgency=low
   * ignore cachefilesd options "culltable", "resume_thresholds"
   * disallow the "bind" command in the configuration file
   * limit statx() concurrency to 16k (from 1 million)
+  * merge redundant fchdir() system calls
 
  --   
 

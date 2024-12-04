@@ -47,7 +47,8 @@ struct Instance final {
 
 	Instance(uint_least64_t cull_files, uint_least64_t cull_bytes)
 	{
-		cull.emplace(uring, dev_cachefiles, cull_files, cull_bytes,
+		cull.emplace(event_loop, uring, dev_cachefiles,
+			     cull_files, cull_bytes,
 			     BIND_THIS_METHOD(OnCullComplete));
 	}
 

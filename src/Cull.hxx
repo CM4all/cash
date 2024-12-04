@@ -7,8 +7,10 @@
 #include "DevCachefiles.hxx"
 #include "Walk.hxx"
 #include "WHandler.hxx"
+#include "Chdir.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/BindMethod.hxx"
+#include "util/IntrusiveList.hxx"
 
 #include <cstdint>
 #include <string>
@@ -28,9 +30,17 @@ class Cull final : WalkHandler {
 
 	Walk walk;
 
+	Chdir chdir;
+
+	class CullFileOperation;
+	IntrusiveList<CullFileOperation> operations, new_operations;
+
+	std::size_t n_deleted_files = 0, n_busy = 0;
+	uint_least64_t n_deleted_bytes = 0, n_errors = 0;
+
 public:
 	[[nodiscard]]
-	Cull(Uring::Queue &_uring,
+	Cull(EventLoop &event_loop, Uring::Queue &_uring,
 	     FileDescriptor _dev_cachefiles,
 	     std::size_t _cull_files, uint_least64_t _cull_bytes,
 	     Callback _callback);
@@ -39,6 +49,9 @@ public:
 	void Start(FileDescriptor root_fd);
 
 private:
+	void OperationFinished(CullFileOperation &op) noexcept;
+	void Finish() noexcept;
+
 	// virtual methods from WalkHandler
 	void OnWalkAncient(FileDescriptor directory_fd,
 			   std::string_view filename) noexcept override;
