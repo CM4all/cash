@@ -5,13 +5,13 @@
 #pragma once
 
 #include "WResult.hxx"
+#include "co/MultiResume.hxx"
 #include "util/IntrusiveList.hxx"
 
 #include <cstdint>
 #include <string>
 
 class FileDescriptor;
-class EventLoop;
 namespace Uring { class Queue; }
 class WalkHandler;
 
@@ -22,13 +22,19 @@ class WalkHandler;
  * asynchronously in the #EventLoop (using io_uring).
  */
 class Walk final {
-	EventLoop &event_loop;
 	Uring::Queue &uring;
 
 	WalkHandler &handler;
 
 	class StatItem;
 	IntrusiveList<StatItem, IntrusiveListBaseHookTraits<StatItem>, IntrusiveListOptions{.constant_time_size=true}> stat;
+
+	/**
+	 * This is awaited on by coroutines which want to add items to
+	 * #stat when there are too many pending operations already.
+	 * It will be resumed when enough operations have completed.
+	 */
+	Co::MultiResume resume_stat;
 
 	WalkResult result;
 
@@ -56,7 +62,7 @@ class Walk final {
 
 public:
 	[[nodiscard]]
-	Walk(EventLoop &_event_loop, Uring::Queue &_uring,
+	Walk(Uring::Queue &_uring,
 	     std::size_t _collect_files, uint_least64_t _collect_bytes,
 	     WalkHandler &_handler);
 	~Walk() noexcept;

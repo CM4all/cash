@@ -5,7 +5,6 @@
 #include "Walk.hxx"
 #include "WHandler.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
-#include "event/co/Sleep.hxx" // TODO
 #include "io/DirectoryReader.hxx"
 #include "io/Open.hxx"
 #include "io/uring/CoOperation.hxx"
@@ -62,9 +61,8 @@ Walk::StatItem::Run(Uring::Queue &uring_)
 		/* before we scan another directory, make sure our
 		   "stat" list isn't over-full (to put a cap on our
 		   memory usage) */
-		// TODO use some notification instead of polling periodically
 		while (walk.stat.size() > MAX_STAT)
-			co_await Co::Sleep(walk.event_loop, std::chrono::milliseconds{10});
+			co_await walk.resume_stat;
 
 		walk.AddDirectory(*directory, std::move(name));
 	} else if (S_ISREG(stx.stx_mode)) {
@@ -73,10 +71,10 @@ Walk::StatItem::Run(Uring::Queue &uring_)
 	}
 }
 
-Walk::Walk(EventLoop &_event_loop, Uring::Queue &_uring,
+Walk::Walk(Uring::Queue &_uring,
 	   uint_least64_t _collect_files, std::size_t _collect_bytes,
 	   WalkHandler &_handler)
-	:event_loop(_event_loop), uring(_uring),
+	:uring(_uring),
 	 handler(_handler),
 	 collect_files(_collect_files), collect_bytes(_collect_bytes),
 	 discard_older_than(FileTime{time(nullptr)} - DISCARD_OLDER_THAN)
@@ -152,7 +150,12 @@ try {
 inline void
 Walk::OnStatCompletion(StatItem &item) noexcept
 {
+	const bool was_too_many_stat = stat.size() >= MAX_STAT;
+
 	stat.erase_and_dispose(stat.iterator_to(item), DeleteDisposer{});
+
+	if (was_too_many_stat && stat.size() < MAX_STAT)
+		resume_stat.ResumeAll();
 
 	if (stat.empty())
 		handler.OnWalkFinished(std::move(result));

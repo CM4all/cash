@@ -30,7 +30,7 @@ class Cull final : WalkHandler {
 
 public:
 	[[nodiscard]]
-	Cull(EventLoop &_event_loop, Uring::Queue &_uring,
+	Cull(Uring::Queue &_uring,
 	     FileDescriptor _dev_cachefiles,
 	     std::size_t _cull_files, uint_least64_t _cull_bytes,
 	     Callback _callback);

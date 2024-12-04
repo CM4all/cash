@@ -80,7 +80,7 @@ try {
 
 	Instance instance;
 
-	instance.walk.emplace(instance.event_loop, instance.uring,
+	instance.walk.emplace(instance.uring,
 			      collect_files, collect_bytes,
 			      instance);
 	instance.walk->Start(OpenDirectory(path));

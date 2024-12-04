@@ -19,13 +19,13 @@ CullFile(DevCachefiles &dev_cachefiles,
 	return dev_cachefiles.CullFile(filename);
 }
 
-Cull::Cull(EventLoop &_event_loop, Uring::Queue &_uring,
+Cull::Cull(Uring::Queue &_uring,
 	   FileDescriptor _dev_cachefiles,
 	   uint_least64_t _cull_files, std::size_t _cull_bytes,
 	   Callback _callback)
 	:dev_cachefiles(_dev_cachefiles),
 	 callback(_callback),
-	 walk(_event_loop, _uring, _cull_files, _cull_bytes, *this)
+	 walk(_uring, _cull_files, _cull_bytes, *this)
 {
 	assert(callback);
 }
