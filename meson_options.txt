@@ -1,2 +1,4 @@
 option('systemd', type: 'feature', description: 'systemd support (using libsystemd)')
 option('cap', type: 'feature', description: 'Linux capability support (using libcap)')
+
+option('test', type: 'boolean', value: false, description: 'Build unit tests and debug programs')
