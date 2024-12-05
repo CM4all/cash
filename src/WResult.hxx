@@ -106,7 +106,7 @@ struct WalkResult {
 
 		[[nodiscard]]
 		File(Directory &_parent, std::string &&_name,
-					 FileTime _time, const uint_least64_t _size) noexcept
+		     FileTime _time, const uint_least64_t _size) noexcept
 			:parent(_parent), time(_time), size(_size),
 			name(std::move(_name)) {}
 
