@@ -46,7 +46,11 @@ Cull::CullFileOperation::OnChdir(SharedLease lease) noexcept
 		break;
 	}
 
+	/* explicitly release the Chdir lease before invoking the
+	   OperationFinished callback because that callback may
+	   destruct the Chdir instance */
 	lease = {};
+
 	cull.OperationFinished(*this);
 }
 
