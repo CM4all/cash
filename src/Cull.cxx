@@ -4,6 +4,8 @@
 
 #include "Cull.hxx"
 #include "Walk.hxx"
+#include "io/uring/Operation.hxx"
+#include "io/uring/Queue.hxx"
 #include "util/DeleteDisposer.hxx"
 
 #include <cassert>
@@ -11,7 +13,9 @@
 
 #include <fmt/core.h> // TODO
 
-class Cull::CullFileOperation final : public IntrusiveListHook<>, ChdirWaiter {
+class Cull::CullFileOperation final
+	: public IntrusiveListHook<>, ChdirWaiter, Uring::Operation
+{
 	Cull &cull;
 
 	const WalkDirectoryRef directory;
@@ -19,6 +23,10 @@ class Cull::CullFileOperation final : public IntrusiveListHook<>, ChdirWaiter {
 	const std::string name;
 
 	const uint_least64_t size;
+
+	SharedLease chdir_lease;
+
+	DevCachefiles::Buffer buffer;
 
 public:
 	CullFileOperation(Cull &_cull, WalkDirectory &_directory,
@@ -38,12 +46,40 @@ public:
 	// virtual methods from ChdirWaiter
 	void OnChdir(SharedLease lease) noexcept override;
 	void OnChdirError() noexcept override;
+
+	// virtual methods from Uring::Operation
+	void OnUringCompletion(int res) noexcept override;
 };
 
 void
 Cull::CullFileOperation::OnChdir(SharedLease lease) noexcept
 {
-	switch (cull.dev_cachefiles.CullFile(name)) {
+	chdir_lease = std::move(lease);
+
+	const auto w = DevCachefiles::FormatCullFile(buffer, name);
+	if (w.data() == nullptr) {
+		++cull.n_errors;
+		cull.OperationFinished(*this);
+		return;
+	}
+
+	auto &s = cull.uring.RequireSubmitEntry();
+	io_uring_prep_write(&s, cull.dev_cachefiles.GetFileDescriptor().Get(),
+			    w.data(), w.size(), 0);
+	cull.uring.Push(s, *this);
+}
+
+void
+Cull::CullFileOperation::OnChdirError() noexcept
+{
+	++cull.n_errors;
+	cull.OperationFinished(*this);
+}
+
+void
+Cull::CullFileOperation::OnUringCompletion(int res) noexcept
+{
+	switch (cull.dev_cachefiles.CheckCullFileResult(name, res)) {
 	case DevCachefiles::CullResult::SUCCESS:
 		++cull.n_deleted_files;
 		cull.n_deleted_bytes += size;
@@ -58,18 +94,6 @@ Cull::CullFileOperation::OnChdir(SharedLease lease) noexcept
 		break;
 	}
 
-	/* explicitly release the Chdir lease before invoking the
-	   OperationFinished callback because that callback may
-	   destruct the Chdir instance */
-	lease = {};
-
-	cull.OperationFinished(*this);
-}
-
-void
-Cull::CullFileOperation::OnChdirError() noexcept
-{
-	++cull.n_errors;
 	cull.OperationFinished(*this);
 }
 
@@ -77,7 +101,7 @@ Cull::Cull(EventLoop &event_loop, Uring::Queue &_uring,
 	   FileDescriptor _dev_cachefiles,
 	   uint_least64_t _cull_files, std::size_t _cull_bytes,
 	   Callback _callback)
-	:dev_cachefiles(_dev_cachefiles),
+	:uring(_uring), dev_cachefiles(_dev_cachefiles),
 	 callback(_callback),
 	 walk(new Walk(_uring, _cull_files, _cull_bytes, *this)),
 	 chdir(event_loop),

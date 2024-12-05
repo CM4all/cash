@@ -5,8 +5,13 @@
 #pragma once
 
 #include "io/FileDescriptor.hxx"
+#include "util/StringBuffer.hxx"
 
+#include <cstddef>
+#include <span>
 #include <string_view>
+
+#include <limits.h> // for NAME_MAX
 
 /**
  * OO wrapper for a /dev/cachefiles file descriptor (non-owning).
@@ -22,6 +27,14 @@ public:
 	DevCachefiles(const DevCachefiles &) = delete;
 	DevCachefiles &operator=(const DevCachefiles &) = delete;
 
+	FileDescriptor GetFileDescriptor() const noexcept {
+		return fd;
+	}
+
+	using Buffer = StringBuffer<NAME_MAX + 8>;
+
+	static std::span<const std::byte> FormatCullFile(Buffer &buffer, std::string_view filename) noexcept;
+
 	enum class CullResult {
 		SUCCESS,
 		BUSY,
@@ -29,5 +42,5 @@ public:
 	};
 
 	[[nodiscard]]
-	CullResult CullFile(std::string_view filename) noexcept;
+	static CullResult CheckCullFileResult(std::string_view filename, int res) noexcept;
 };

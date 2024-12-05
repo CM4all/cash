@@ -27,6 +27,7 @@ class Walk;
  * the longest time.  Upon completion, the given callback is invoked.
  */
 class Cull final : WalkHandler {
+	Uring::Queue &uring;
 	DevCachefiles dev_cachefiles;
 
 	using Callback = BoundMethod<void() noexcept>;
