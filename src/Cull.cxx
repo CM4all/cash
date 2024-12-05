@@ -106,7 +106,8 @@ Cull::Start(FileDescriptor root_fd)
 
 void
 Cull::OnWalkAncient(WalkDirectory &directory,
-		    std::string &&filename) noexcept
+		    std::string &&filename,
+		    [[maybe_unused]] uint_least64_t size) noexcept
 {
 	CullFile(dev_cachefiles, directory.fd, filename);
 }

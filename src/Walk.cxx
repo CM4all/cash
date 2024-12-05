@@ -110,7 +110,7 @@ Walk::AddFile(WalkDirectory &parent, std::string &&name,
 	      FileTime atime, uint_least64_t size)
 {
 	if (atime < discard_older_than) {
-		handler.OnWalkAncient(parent, std::move(name));
+		handler.OnWalkAncient(parent, std::move(name), size);
 		return;
 	}
 

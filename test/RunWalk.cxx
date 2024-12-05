@@ -38,7 +38,8 @@ struct Instance final : WalkHandler {
 
 	// virtual methods from WalkHandler
 	void OnWalkAncient([[maybe_unused]] WalkDirectory &directory,
-			   std::string &&filename) noexcept override {
+			   std::string &&filename,
+			   [[maybe_unused]] uint_least64_t size) noexcept override {
 		fmt::print("ancient {:?}\n", filename);
 	}
 

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 class FileDescriptor;
@@ -20,7 +21,8 @@ public:
          * unconditionally).
 	 */
 	virtual void OnWalkAncient(WalkDirectory &directory,
-				   std::string &&filename) noexcept = 0;
+				   std::string &&filename,
+				   uint_least64_t size) noexcept = 0;
 
 	/**
 	 * The #Walk has finished completely.  This method is allowed
