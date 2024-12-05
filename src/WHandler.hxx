@@ -7,6 +7,7 @@
 #include <string_view>
 
 class FileDescriptor;
+struct WalkDirectory;
 struct WalkResult;
 
 /**
@@ -18,7 +19,7 @@ public:
 	 * An "ancient" file was found (that should be culled
          * unconditionally).
 	 */
-	virtual void OnWalkAncient(FileDescriptor directory_fd,
+	virtual void OnWalkAncient(WalkDirectory &directory,
 				   std::string_view filename) noexcept = 0;
 
 	/**
