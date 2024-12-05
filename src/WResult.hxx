@@ -15,88 +15,88 @@
 using FileTime = std::chrono::duration<time_t>;
 
 /**
+ * Represents a directory inside "/var/cache/fscache/cache".  It is
+ * kept around because it manages an O_PATH file descriptor for
+ * efficient file access inside this directory.
+ *
+ * Instances of this object are reference-counted (except for the
+ * #root instance).  Use #WalkDirectoryRef to use these reference
+ * counts safely.
+ */
+struct WalkDirectory {
+	WalkDirectory *const parent;
+
+	/**
+	 * An O_PATH file descriptor.
+	 */
+	const UniqueFileDescriptor fd;
+
+	unsigned ref = 1;
+
+	struct RootTag {};
+	WalkDirectory(RootTag, UniqueFileDescriptor &&_fd) noexcept
+		:parent(nullptr), fd(std::move(_fd)) {}
+
+	WalkDirectory(WalkDirectory &_parent, UniqueFileDescriptor &&_fd)
+		:parent(&_parent.Ref()), fd(std::move(_fd)) {}
+
+	~WalkDirectory() noexcept {
+		if (parent != nullptr)
+			parent->Unref();
+	}
+
+	WalkDirectory(const WalkDirectory &) = delete;
+	WalkDirectory &operator=(const WalkDirectory &) = delete;
+
+	WalkDirectory &Ref() noexcept {
+		++ref;
+		return *this;
+	}
+
+	void Unref() noexcept {
+		if (--ref == 0)
+			delete this;
+	}
+};
+
+class WalkDirectoryRef {
+	WalkDirectory &directory;
+
+public:
+	[[nodiscard]]
+	explicit WalkDirectoryRef(WalkDirectory &_directory) noexcept
+		:directory(_directory.Ref()) {}
+
+	struct Adopt {};
+
+	[[nodiscard]]
+	WalkDirectoryRef(Adopt, WalkDirectory &_directory) noexcept
+		:directory(_directory) {}
+
+	~WalkDirectoryRef() noexcept {
+		directory.Unref();
+	}
+
+	WalkDirectoryRef(const WalkDirectoryRef &) = delete;
+	WalkDirectoryRef &operator=(const WalkDirectoryRef &) = delete;
+
+	[[nodiscard]]
+	WalkDirectory &operator*() const noexcept{
+		return directory;
+	}
+
+	[[nodiscard]]
+	WalkDirectory *operator->() const noexcept{
+		return &directory;
+	}
+};
+
+/**
  * The result struct for #Walk, passed to #WalkHandler.
  */
 struct WalkResult {
-	/**
-	 * Represents a directory inside "/var/cache/fscache/cache".
-	 * It is kept around because it manages an O_PATH file
-	 * descriptor for efficient file access inside this directory.
-	 *
-	 * Instances of this object are reference-counted (except for
-	 * the #root instance).  Use #DirectoryRef to use these
-	 * reference counts safely.
-	 */
-	struct Directory {
-		Directory *const parent;
-
-		/**
-		 * An O_PATH file descriptor.
-		 */
-		const UniqueFileDescriptor fd;
-
-		unsigned ref = 1;
-
-		struct RootTag {};
-		Directory(RootTag, UniqueFileDescriptor &&_fd) noexcept
-			:parent(nullptr), fd(std::move(_fd)) {}
-
-		Directory(Directory &_parent, UniqueFileDescriptor &&_fd)
-			:parent(&_parent.Ref()), fd(std::move(_fd)) {}
-
-		~Directory() noexcept {
-			if (parent != nullptr)
-				parent->Unref();
-		}
-
-		Directory(const Directory &) = delete;
-		Directory &operator=(const Directory &) = delete;
-
-		Directory &Ref() noexcept {
-			++ref;
-			return *this;
-		}
-
-		void Unref() noexcept {
-			if (--ref == 0)
-				delete this;
-		}
-	};
-
-	class DirectoryRef {
-		Directory &directory;
-
-	public:
-		[[nodiscard]]
-		explicit DirectoryRef(Directory &_directory) noexcept
-			:directory(_directory.Ref()) {}
-
-		struct Adopt {};
-
-		[[nodiscard]]
-		DirectoryRef(Adopt, Directory &_directory) noexcept
-			:directory(_directory) {}
-
-		~DirectoryRef() noexcept {
-			directory.Unref();
-		}
-
-		DirectoryRef(const DirectoryRef &) = delete;
-		DirectoryRef &operator=(const DirectoryRef &) = delete;
-
-		[[nodiscard]]
-		Directory &operator*() const noexcept{
-			return directory;
-		}
-
-		[[nodiscard]]
-		Directory *operator->() const noexcept{
-			return &directory;
-		}
-	};
-
 	struct File final : IntrusiveTreeSetHook<> {
-		DirectoryRef parent;
+		WalkDirectoryRef parent;
 
 		const FileTime time;
 
@@ -105,7 +105,7 @@ struct WalkResult {
 		const std::string name;
 
 		[[nodiscard]]
-		File(Directory &_parent, std::string &&_name,
+		File(WalkDirectory &_parent, std::string &&_name,
 		     FileTime _time, const uint_least64_t _size) noexcept
 			:parent(_parent), time(_time), size(_size),
 			name(std::move(_name)) {}

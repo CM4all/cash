@@ -35,7 +35,7 @@ static constexpr FileTime DISCARD_OLDER_THAN = std::chrono::hours{120 * 24};
 class Walk::StatItem : public IntrusiveListHook<> {
 	Walk &walk;
 
-	DirectoryRef directory;
+	WalkDirectoryRef directory;
 
 	std::string name;
 
@@ -43,7 +43,7 @@ class Walk::StatItem : public IntrusiveListHook<> {
 
 public:
 	[[nodiscard]]
-	StatItem(Walk &_walk, Directory &_directory, const char *_name) noexcept
+	StatItem(Walk &_walk, WalkDirectory &_directory, const char *_name) noexcept
 		:walk(_walk), directory(_directory), name(_name) {}
 
 	void Start(Uring::Queue &uring_) noexcept {
@@ -101,12 +101,12 @@ Walk::~Walk() noexcept
 void
 Walk::Start(FileDescriptor root_fd)
 {
-	DirectoryRef root{DirectoryRef::Adopt{}, *new Directory(Directory::RootTag{}, OpenPath(root_fd, ".", O_DIRECTORY))};
+	WalkDirectoryRef root{WalkDirectoryRef::Adopt{}, *new WalkDirectory(WalkDirectory::RootTag{}, OpenPath(root_fd, ".", O_DIRECTORY))};
 	ScanDirectory(*root);
 }
 
 inline void
-Walk::AddFile(Directory &parent, std::string &&name,
+Walk::AddFile(WalkDirectory &parent, std::string &&name,
 	      FileTime atime, uint_least64_t size)
 {
 	if (atime < discard_older_than) {
@@ -136,7 +136,7 @@ IsSpecialFilename(const char *s) noexcept
 }
 
 inline void
-Walk::ScanDirectory(Directory &directory)
+Walk::ScanDirectory(WalkDirectory &directory)
 {
 	DirectoryReader r{OpenDirectory(directory.fd, ".")};
 	while (const char *name = r.Read()) {
@@ -151,9 +151,9 @@ Walk::ScanDirectory(Directory &directory)
 }
 
 inline void
-Walk::AddDirectory(Directory &parent, std::string &&name)
+Walk::AddDirectory(WalkDirectory &parent, std::string &&name)
 try {
-	DirectoryRef directory{DirectoryRef::Adopt{}, *new Directory(parent, OpenPath(parent.fd, name.c_str(), O_DIRECTORY))};
+	WalkDirectoryRef directory{WalkDirectoryRef::Adopt{}, *new WalkDirectory(parent, OpenPath(parent.fd, name.c_str(), O_DIRECTORY))};
 	ScanDirectory(*directory);
 } catch (...) {
 	fmt::print(stderr, "Failed to scan directory: {}\n", std::current_exception());

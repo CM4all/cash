@@ -38,8 +38,6 @@ class Walk final {
 
 	WalkResult result;
 
-	using Directory = WalkResult::Directory;
-	using DirectoryRef = WalkResult::DirectoryRef;
 	using File = WalkResult::File;
 
 	/**
@@ -70,11 +68,11 @@ public:
 	void Start(FileDescriptor root_fd);
 
 private:
-	void AddDirectory(Directory &parent, std::string &&name);
-	void AddFile(Directory &parent, std::string &&name,
+	void AddDirectory(WalkDirectory &parent, std::string &&name);
+	void AddFile(WalkDirectory &parent, std::string &&name,
 		     FileTime atime, uint_least64_t size);
 
-	void ScanDirectory(Directory &directory);
+	void ScanDirectory(WalkDirectory &directory);
 
 	void OnStatCompletion(StatItem &item) noexcept;
 };
