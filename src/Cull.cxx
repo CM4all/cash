@@ -21,10 +21,15 @@ class Cull::CullFileOperation final : public IntrusiveListHook<>, ChdirWaiter {
 	const uint_least64_t size;
 
 public:
+	CullFileOperation(Cull &_cull, WalkDirectory &_directory,
+			  std::string &&_name, uint_least64_t _size) noexcept
+		:cull(_cull), directory(_directory),
+		 name(std::move(_name)),
+		 size(_size) {}
+
 	CullFileOperation(Cull &_cull, WalkResult::File &&file) noexcept
-		:cull(_cull), directory(*file.parent),
-		 name(std::move(file.name)),
-		 size(file.size) {}
+		:CullFileOperation(_cull, *file.parent,
+				   std::move(file.name), file.size) {}
 
 	void Start() noexcept {
 		cull.chdir.Add(directory->fd, *this);
@@ -68,17 +73,6 @@ Cull::CullFileOperation::OnChdirError() noexcept
 	cull.OperationFinished(*this);
 }
 
-static DevCachefiles::CullResult
-CullFile(DevCachefiles &dev_cachefiles,
-	 FileDescriptor directory_fd, std::string_view filename)
-{
-	if (fchdir(directory_fd.Get()) < 0)
-		return DevCachefiles::CullResult::ERROR;
-
-	// TODO use io_uring for this write() operation
-	return dev_cachefiles.CullFile(filename);
-}
-
 Cull::Cull(EventLoop &event_loop, Uring::Queue &_uring,
 	   FileDescriptor _dev_cachefiles,
 	   uint_least64_t _cull_files, std::size_t _cull_bytes,
@@ -107,9 +101,11 @@ Cull::Start(FileDescriptor root_fd)
 void
 Cull::OnWalkAncient(WalkDirectory &directory,
 		    std::string &&filename,
-		    [[maybe_unused]] uint_least64_t size) noexcept
+		    uint_least64_t size) noexcept
 {
-	CullFile(dev_cachefiles, directory.fd, filename);
+	auto *op = new CullFileOperation(*this, directory, std::move(filename), size);
+	new_operations.push_back(*op);
+	defer_start.Schedule();
 }
 
 void
@@ -155,7 +151,7 @@ Cull::OperationFinished(CullFileOperation &op) noexcept
 	assert(!operations.empty());
 
 	operations.erase_and_dispose(operations.iterator_to(op), DeleteDisposer{});
-	if (operations.empty() && new_operations.empty())
+	if (!walk && operations.empty() && new_operations.empty())
 		Finish();
 }
 
