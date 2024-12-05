@@ -88,8 +88,7 @@ LoadConfigFile(const char *path)
 			   command == "resume_thresholds"sv) {
 			// ignore (for cachefilesd compatbility)
 			continue;
-		} else
-			config.frun = ParsePercent(value);
+		}
 
 		kernel_config_iterator =
 			config.kernel_config.emplace_after(kernel_config_iterator,
