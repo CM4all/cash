@@ -9,7 +9,6 @@
 #include "util/DeleteDisposer.hxx"
 
 #include <cassert>
-#include <memory>
 
 #include <fmt/core.h> // TODO
 
