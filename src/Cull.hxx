@@ -5,7 +5,6 @@
 #pragma once
 
 #include "DevCachefiles.hxx"
-#include "Walk.hxx"
 #include "WHandler.hxx"
 #include "Chdir.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -13,9 +12,13 @@
 #include "util/IntrusiveList.hxx"
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
 #include <time.h> // for time_t
+
+namespace Uring { class Queue; }
+class Walk;
 
 /**
  * This class represents the cachefiles "cull" operation.  It walks
@@ -28,7 +31,7 @@ class Cull final : WalkHandler {
 	using Callback = BoundMethod<void() noexcept>;
 	const Callback callback;
 
-	Walk walk;
+	std::unique_ptr<Walk> walk;
 
 	Chdir chdir;
 

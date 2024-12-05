@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Cull.hxx"
+#include "Walk.hxx"
 #include "util/DeleteDisposer.hxx"
 
 #include <cassert>
@@ -78,7 +79,7 @@ Cull::Cull(EventLoop &event_loop, Uring::Queue &_uring,
 	   Callback _callback)
 	:dev_cachefiles(_dev_cachefiles),
 	 callback(_callback),
-	 walk(_uring, _cull_files, _cull_bytes, *this),
+	 walk(new Walk(_uring, _cull_files, _cull_bytes, *this)),
 	 chdir(event_loop)
 {
 	assert(callback);
@@ -93,7 +94,7 @@ Cull::~Cull() noexcept
 void
 Cull::Start(FileDescriptor root_fd)
 {
-	walk.Start(root_fd);
+	walk->Start(root_fd);
 }
 
 void
