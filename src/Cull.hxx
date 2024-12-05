@@ -57,6 +57,6 @@ private:
 
 	// virtual methods from WalkHandler
 	void OnWalkAncient(WalkDirectory &directory,
-			   std::string_view filename) noexcept override;
+			   std::string &&filename) noexcept override;
 	void OnWalkFinished(WalkResult &&result) noexcept override;
 };

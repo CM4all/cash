@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <string_view>
+#include <string>
 
 class FileDescriptor;
 struct WalkDirectory;
@@ -20,7 +20,7 @@ public:
          * unconditionally).
 	 */
 	virtual void OnWalkAncient(WalkDirectory &directory,
-				   std::string_view filename) noexcept = 0;
+				   std::string &&filename) noexcept = 0;
 
 	/**
 	 * The #Walk has finished completely.  This method is allowed

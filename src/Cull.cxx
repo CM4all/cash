@@ -99,7 +99,7 @@ Cull::Start(FileDescriptor root_fd)
 
 void
 Cull::OnWalkAncient(WalkDirectory &directory,
-		    std::string_view filename) noexcept
+		    std::string &&filename) noexcept
 {
 	CullFile(dev_cachefiles, directory.fd, filename);
 }
