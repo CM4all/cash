@@ -121,6 +121,8 @@ Cull::OnWalkFinished(WalkResult &&result) noexcept
 
 	assert(result.total_bytes == 0);
 
+	walk.reset();
+
 	if (operations.empty() && new_operations.empty()) {
 		Finish();
 		return;
