@@ -80,7 +80,11 @@ Cull::Cull(EventLoop &event_loop, Uring::Queue &_uring,
 	assert(callback);
 }
 
-Cull::~Cull() noexcept = default;
+Cull::~Cull() noexcept
+{
+	operations.clear_and_dispose(DeleteDisposer{});
+	new_operations.clear_and_dispose(DeleteDisposer{});
+}
 
 void
 Cull::Start(FileDescriptor root_fd)
