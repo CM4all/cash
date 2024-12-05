@@ -22,9 +22,6 @@ public:
 	DevCachefiles(const DevCachefiles &) = delete;
 	DevCachefiles &operator=(const DevCachefiles &) = delete;
 
-	[[gnu::pure]]
-	bool IsInUse(std::string_view filename) noexcept;
-
 	enum class CullResult {
 		SUCCESS,
 		BUSY,
