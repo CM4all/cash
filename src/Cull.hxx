@@ -7,6 +7,7 @@
 #include "DevCachefiles.hxx"
 #include "WHandler.hxx"
 #include "Chdir.hxx"
+#include "event/DeferEvent.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/BindMethod.hxx"
 #include "util/IntrusiveList.hxx"
@@ -38,6 +39,11 @@ class Cull final : WalkHandler {
 	class CullFileOperation;
 	IntrusiveList<CullFileOperation> operations, new_operations;
 
+	/**
+	 * Start #new_operations and move them to #operations.
+	 */
+	DeferEvent defer_start;
+
 	std::size_t n_deleted_files = 0, n_busy = 0;
 	uint_least64_t n_deleted_bytes = 0, n_errors = 0;
 
@@ -52,6 +58,7 @@ public:
 	void Start(FileDescriptor root_fd);
 
 private:
+	void OnDeferredStart() noexcept;
 	void OperationFinished(CullFileOperation &op) noexcept;
 	void Finish() noexcept;
 

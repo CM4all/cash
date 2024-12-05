@@ -86,7 +86,8 @@ Cull::Cull(EventLoop &event_loop, Uring::Queue &_uring,
 	:dev_cachefiles(_dev_cachefiles),
 	 callback(_callback),
 	 walk(new Walk(_uring, _cull_files, _cull_bytes, *this)),
-	 chdir(event_loop)
+	 chdir(event_loop),
+	 defer_start(event_loop, BIND_THIS_METHOD(OnDeferredStart))
 {
 	assert(callback);
 }
@@ -130,10 +131,16 @@ Cull::OnWalkFinished(WalkResult &&result) noexcept
 
 	walk.reset();
 
-	if (operations.empty() && new_operations.empty()) {
+	if (!new_operations.empty())
+		defer_start.Schedule();
+	else if (operations.empty())
 		Finish();
-		return;
-	}
+}
+
+inline void
+Cull::OnDeferredStart() noexcept
+{
+	assert(!new_operations.empty());
 
 	new_operations.clear_and_dispose([this](auto *op){
 		operations.push_back(*op);
