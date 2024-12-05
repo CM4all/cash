@@ -14,14 +14,20 @@
 class Cull::CullFileOperation final : public IntrusiveListHook<>, ChdirWaiter {
 	Cull &cull;
 
-	std::unique_ptr<WalkResult::File> file;
+	const WalkDirectoryRef directory;
+
+	const std::string name;
+
+	const uint_least64_t size;
 
 public:
-	CullFileOperation(Cull &_cull, WalkResult::File *_file) noexcept
-		:cull(_cull), file(_file) {}
+	CullFileOperation(Cull &_cull, WalkResult::File &&file) noexcept
+		:cull(_cull), directory(*file.parent),
+		 name(std::move(file.name)),
+		 size(file.size) {}
 
 	void Start() noexcept {
-		cull.chdir.Add(file->parent->fd, *this);
+		cull.chdir.Add(directory->fd, *this);
 	}
 
 	// virtual methods from ChdirWaiter
@@ -32,10 +38,10 @@ public:
 void
 Cull::CullFileOperation::OnChdir(SharedLease lease) noexcept
 {
-	switch (cull.dev_cachefiles.CullFile(file->name)) {
+	switch (cull.dev_cachefiles.CullFile(name)) {
 	case DevCachefiles::CullResult::SUCCESS:
 		++cull.n_deleted_files;
-		cull.n_deleted_bytes += file->size;
+		cull.n_deleted_bytes += size;
 		break;
 
 	case DevCachefiles::CullResult::BUSY:
@@ -115,7 +121,8 @@ Cull::OnWalkFinished(WalkResult &&result) noexcept
 		result.total_bytes -= file->size;
 #endif
 
-		auto *op = new CullFileOperation(*this, file);
+		auto *op = new CullFileOperation(*this, std::move(*file));
+		delete file;
 		new_operations.push_back(*op);
 	});
 

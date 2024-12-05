@@ -102,7 +102,7 @@ struct WalkResult {
 
 		const uint_least64_t size;
 
-		const std::string name;
+		std::string name;
 
 		[[nodiscard]]
 		File(WalkDirectory &_parent, std::string &&_name,
