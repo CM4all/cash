@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "io/uring/Close.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/IntrusiveTreeSet.hxx"
@@ -26,23 +27,30 @@ using FileTime = std::chrono::duration<time_t>;
  * counts safely.
  */
 struct WalkDirectory {
+	Uring::Queue &uring;
+
 	WalkDirectory *const parent;
 
 	/**
 	 * An O_PATH file descriptor.
 	 */
-	const UniqueFileDescriptor fd;
+	const FileDescriptor fd;
 
 	unsigned ref = 1;
 
 	struct RootTag {};
-	WalkDirectory(RootTag, UniqueFileDescriptor &&_fd) noexcept
-		:parent(nullptr), fd(std::move(_fd)) {}
+	WalkDirectory(Uring::Queue &_uring, RootTag,
+		      UniqueFileDescriptor &&_fd) noexcept
+		:uring(_uring), parent(nullptr), fd(_fd.Release()) {}
 
-	WalkDirectory(WalkDirectory &_parent, UniqueFileDescriptor &&_fd)
-		:parent(&_parent.Ref()), fd(std::move(_fd)) {}
+	WalkDirectory(Uring::Queue &_uring, WalkDirectory &_parent,
+		      UniqueFileDescriptor &&_fd)
+		:uring(_uring),
+		 parent(&_parent.Ref()), fd(_fd.Release()) {}
 
 	~WalkDirectory() noexcept {
+		Uring::Close(&uring, fd);
+
 		if (parent != nullptr)
 			parent->Unref();
 	}

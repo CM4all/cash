@@ -101,7 +101,7 @@ Walk::~Walk() noexcept
 void
 Walk::Start(FileDescriptor root_fd)
 {
-	WalkDirectoryRef root{WalkDirectoryRef::Adopt{}, *new WalkDirectory(WalkDirectory::RootTag{}, OpenPath(root_fd, ".", O_DIRECTORY))};
+	WalkDirectoryRef root{WalkDirectoryRef::Adopt{}, *new WalkDirectory(uring, WalkDirectory::RootTag{}, OpenPath(root_fd, ".", O_DIRECTORY))};
 	ScanDirectory(*root);
 }
 
@@ -153,7 +153,7 @@ Walk::ScanDirectory(WalkDirectory &directory)
 inline void
 Walk::AddDirectory(WalkDirectory &parent, std::string &&name)
 try {
-	WalkDirectoryRef directory{WalkDirectoryRef::Adopt{}, *new WalkDirectory(parent, OpenPath(parent.fd, name.c_str(), O_DIRECTORY))};
+	WalkDirectoryRef directory{WalkDirectoryRef::Adopt{}, *new WalkDirectory(uring, parent, OpenPath(parent.fd, name.c_str(), O_DIRECTORY))};
 	ScanDirectory(*directory);
 } catch (...) {
 	fmt::print(stderr, "Failed to scan directory: {}\n", std::current_exception());
