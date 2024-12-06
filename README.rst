@@ -1,26 +1,11 @@
-cash
-====
+cachefilesd
+===========
 
-``cash`` is an alternative implementation of the Linux ``cachefiles``
-userspace daemon.  Unlike ``cachefilesd`` (the primary
-implementation), it uses efficient data structures and ``io_uring``,
-which makes it scale well to multi-terabyte cache partitions.
-
-We developed this project because ``cachefilesd`` did not scale well
-with large cache partitions; for months, it ran at 100% CPU without
-making any progress, effectively disabling the cache because no old
-files were discarded and therefore no new files could be added.  The
-reason was that ``cachefilesd`` keeps its file list in a sorted array,
-which is extremely inefficient.  Improving this old C code base did
-not seem worth it, because a new implementation in C++ took less time
-than that.
-
-The name "cash" is a play on the pronounciation of "cache" vs "cash".
-Maybe this project deserves a better name...
+The Linux ``cachefiles`` userspace daemon.
 
 
-Building cash
--------------
+Building cachefiles
+-------------------
 
 You need:
 

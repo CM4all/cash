@@ -16,14 +16,14 @@
 static void
 PrintVersion() noexcept
 {
-	fmt::print("cm4all-cash version " VERSION "\n");
+	fmt::print("cachefilesd version " VERSION "\n");
 }
 
 static void
 PrintHelp(const char *argv0) noexcept
 {
 	if (argv0 == nullptr)
-		argv0 = "cm4all-cash";
+		argv0 = "cachefilesd";
 
 	fmt::print(stderr,
 		   "Format:\n"

@@ -1,4 +1,4 @@
-project('CM4all Cash', 'cpp', version: '0.5',
+project('cachefilesd', 'cpp', version: '2.0~git',
   meson_version: '>= 1.0',
   default_options : [
     'cpp_std=c++20',
@@ -130,7 +130,7 @@ conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
 conf.set('HAVE_LIBCAP', cap_dep.found())
 configure_file(output: 'config.h', configuration: conf)
 
-executable('cm4all-cash',
+executable('cachefilesd',
   'src/system/SetupProcess.cxx',
   'src/Main.cxx',
   'src/Options.cxx',
