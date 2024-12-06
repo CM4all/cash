@@ -12,6 +12,7 @@
 #include <string>
 
 class FileDescriptor;
+class UniqueFileDescriptor;
 namespace Uring { class Queue; }
 namespace Co { template <typename T> class Task; }
 class WalkHandler;
@@ -73,7 +74,7 @@ private:
 	void AddFile(WalkDirectory &parent, std::string &&name,
 		     FileTime atime, uint_least64_t size);
 
-	void ScanDirectory(WalkDirectory &directory);
+	void ScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd);
 
 	void OnStatCompletion(StatItem &item) noexcept;
 };

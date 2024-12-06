@@ -103,7 +103,7 @@ void
 Walk::Start(FileDescriptor root_fd)
 {
 	WalkDirectoryRef root{WalkDirectoryRef::Adopt{}, *new WalkDirectory(uring, WalkDirectory::RootTag{}, OpenPath(root_fd, ".", O_DIRECTORY))};
-	ScanDirectory(*root);
+	ScanDirectory(*root, OpenDirectory(root_fd, "."));
 }
 
 inline void
@@ -137,9 +137,9 @@ IsSpecialFilename(const char *s) noexcept
 }
 
 inline void
-Walk::ScanDirectory(WalkDirectory &directory)
+Walk::ScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd)
 {
-	DirectoryReader r{OpenDirectory(directory.fd, ".")};
+	DirectoryReader r{std::move(fd)};
 	while (const char *name = r.Read()) {
 		if (IsSpecialFilename(name))
 			continue;
@@ -159,7 +159,7 @@ try {
 		*new WalkDirectory(uring, parent, co_await Uring::CoOpen(uring, parent.fd, name.c_str(), O_PATH|O_DIRECTORY, 0)),
 	};
 
-	ScanDirectory(*directory);
+	ScanDirectory(*directory, OpenDirectory(directory->fd, "."));
 } catch (...) {
 	fmt::print(stderr, "Failed to scan directory: {}\n", std::current_exception());
 }
