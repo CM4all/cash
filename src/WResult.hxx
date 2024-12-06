@@ -8,7 +8,9 @@
 #include "util/DeleteDisposer.hxx"
 #include "util/IntrusiveTreeSet.hxx"
 
+#include <cassert>
 #include <chrono>
+#include <utility> // for std::exchange()
 
 #include <time.h> // for time_t
 
@@ -60,34 +62,41 @@ struct WalkDirectory {
 };
 
 class WalkDirectoryRef {
-	WalkDirectory &directory;
+	WalkDirectory *directory = nullptr;
 
 public:
 	[[nodiscard]]
 	explicit WalkDirectoryRef(WalkDirectory &_directory) noexcept
-		:directory(_directory.Ref()) {}
+		:directory(&_directory.Ref()) {}
 
 	struct Adopt {};
 
 	[[nodiscard]]
 	WalkDirectoryRef(Adopt, WalkDirectory &_directory) noexcept
-		:directory(_directory) {}
+		:directory(&_directory) {}
+
+	WalkDirectoryRef(WalkDirectoryRef &&src) noexcept
+		:directory(std::exchange(src.directory, nullptr)) {}
 
 	~WalkDirectoryRef() noexcept {
-		directory.Unref();
+		if (directory != nullptr)
+			directory->Unref();
 	}
 
-	WalkDirectoryRef(const WalkDirectoryRef &) = delete;
 	WalkDirectoryRef &operator=(const WalkDirectoryRef &) = delete;
 
 	[[nodiscard]]
 	WalkDirectory &operator*() const noexcept{
-		return directory;
+		assert(directory != nullptr);
+
+		return *directory;
 	}
 
 	[[nodiscard]]
 	WalkDirectory *operator->() const noexcept{
-		return &directory;
+		assert(directory != nullptr);
+
+		return directory;
 	}
 };
 
