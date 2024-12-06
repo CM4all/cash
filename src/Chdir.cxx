@@ -63,39 +63,28 @@ Chdir::Next() noexcept
 		defer_next.Schedule();
 
 		list.clear_and_dispose([](auto *i){
-			i->OnChdirError();
+			assert(i->continuation);
+
+			i->continuation.resume();
 		});
 	} else {
-		/* success: create a lease first; this is kept alive
-		   until all waiters have been invoked to avoid
-		   OnAbandoned() to be called in the middle of this
-		   loop */
-		SharedLease lease{*this};
+		for (auto &i : list)
+			i.lease = *this;
 
-		while (true) {
-			auto &i = list.pop_front();
-			if (list.empty()) {
-				/* the last waiter inherits this
-				   lease, so it won't be released at
-				   the end of this scope */
-				i.OnChdir(std::move(lease));
-				break;
-			}
-
-			/* all other waiters get a copy of the
-			   lease */
-			i.OnChdir(lease);
-		}
+		list.clear_and_dispose([](auto *i){
+			if (i->continuation)
+				i->continuation.resume();
+		});
 	}
 }
 
-void
-Chdir::Add(FileDescriptor directory, ChdirWaiter &w) noexcept
+Chdir::Awaitable
+Chdir::Add(FileDescriptor directory) noexcept
 {
-	map[directory].push_back(w);
-
-	if (current == map.end() || current->first == directory)
+	if (current == map.end())
 		defer_next.Schedule();
+
+	return Awaitable{*this, map[directory]};
 }
 
 void

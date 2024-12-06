@@ -6,34 +6,11 @@
 
 #include "event/DeferEvent.hxx"
 #include "io/FileDescriptor.hxx"
+#include "co/Compat.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/SharedLease.hxx"
 
 #include <map>
-
-/**
- * Handler class for #Chdir.
- */
-class ChdirWaiter {
-	IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK> chdir_siblings;
-
-public:
-	using List = IntrusiveList<ChdirWaiter, IntrusiveListMemberHookTraits<&ChdirWaiter::chdir_siblings>>;
-
-	/**
-	 * The current working directory is now the one passed to
-	 * Chdir::Add().  This method may now perform I/O, even after
-	 * this method has returned.  When all I/O in this directory
-	 * is complete, release the #lease.
-	 */
-	virtual void OnChdir(SharedLease lease) noexcept = 0;
-
-	/**
-	 * An (unspecified) error has occurred and the directory could
-	 * not be changed.
-	 */
-	virtual void OnChdirError() noexcept = 0;
-};
 
 /**
  * Provides an optimization for changing the current working directory
@@ -52,7 +29,54 @@ class Chdir final : SharedAnchor {
 		}
 	};
 
-	using WaiterMap = std::map<FileDescriptor, ChdirWaiter::List, FileDescriptorCompare>;
+	struct Awaitable : IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK> {
+		using List = IntrusiveList<Awaitable>;
+
+		Chdir &parent;
+
+		std::coroutine_handle<> continuation;
+
+		SharedLease lease;
+
+		explicit Awaitable(Chdir &_parent, List &list) noexcept
+			:parent(_parent)
+		{
+			list.push_back(*this);
+
+			if (parent.current != parent.map.end() &&
+			    &parent.current->second == &list)
+			 	lease = parent;
+		}
+
+		Awaitable(const Awaitable &) = delete;
+		Awaitable &operator=(const Awaitable &) = delete;
+
+		[[nodiscard]]
+		bool await_ready() const noexcept {
+			assert(is_linked());
+			assert(!continuation);
+
+			return (bool)lease;
+		}
+
+		void await_suspend(std::coroutine_handle<> _continuation) noexcept {
+			assert(is_linked());
+			assert(!continuation);
+			assert(_continuation);
+			assert(!_continuation.done());
+
+			continuation = _continuation;
+		}
+
+		SharedLease await_resume() noexcept {
+			assert(!is_linked());
+			assert((bool)lease == (parent.current != parent.map.end()));
+
+			return std::move(lease);
+		}
+	};
+
+	using WaiterMap = std::map<FileDescriptor, Awaitable::List, FileDescriptorCompare>;
 
 	/**
 	 * Maps directory file descriptors to a list of waiters.  The
@@ -81,7 +105,7 @@ public:
 	 * @param w the waiter that will be called back; it may be
 	 * canceled by simply destructing the #ChdirWaiter instance
 	 */
-	void Add(FileDescriptor directory, ChdirWaiter &w) noexcept;
+	Awaitable Add(FileDescriptor directory) noexcept;
 
 private:
 	void Next() noexcept;

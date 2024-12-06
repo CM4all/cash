@@ -18,8 +18,10 @@
 
 #include <time.h> // for time_t
 
+namespace Co { class InvokeTask; }
 namespace Uring { class Queue; }
 class Walk;
+class WalkDirectoryRef;
 
 /**
  * This class represents the cachefiles "cull" operation.  It walks
@@ -37,8 +39,11 @@ class Cull final : WalkHandler {
 
 	Chdir chdir;
 
-	class CullFileOperation;
-	IntrusiveList<CullFileOperation> operations, new_operations;
+	/**
+	 * A coroutine running asynchronously.
+	 */
+	class Operation;
+	IntrusiveList<Operation> operations, new_operations;
 
 	/**
 	 * Start #new_operations and move them to #operations.
@@ -60,7 +65,22 @@ public:
 
 private:
 	void OnDeferredStart() noexcept;
-	void OperationFinished(CullFileOperation &op) noexcept;
+
+	/**
+	 * Sends a "cull" command to /dev/cachefilesd.
+	 */
+	Co::InvokeTask CullFile(WalkDirectoryRef directory, std::string name,
+				uint_least64_t size) noexcept;
+
+	/**
+	 * Asynchronously start a coroutine.
+	 */
+	void AddOperation(Co::InvokeTask &&task) noexcept;
+
+	/**
+	 * Called by #Operation after it finishes execution.
+	 */
+	void OperationFinished(Operation &op) noexcept;
 	void Finish() noexcept;
 
 	// virtual methods from WalkHandler
