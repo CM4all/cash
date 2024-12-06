@@ -8,6 +8,10 @@ project('CM4all Cash', 'cpp', version: '0.3',
   ],
 )
 
+version_h = configuration_data()
+version_h.set_quoted('VERSION', meson.project_version())
+configure_file(output: 'version.h', configuration: version_h)
+
 compiler = meson.get_compiler('cpp')
 
 debug = get_option('b_ndebug') != 'true'
@@ -129,6 +133,7 @@ configure_file(output: 'config.h', configuration: conf)
 executable('cm4all-cash',
   'src/system/SetupProcess.cxx',
   'src/Main.cxx',
+  'src/Options.cxx',
   'src/Config.cxx',
   'src/Cull.cxx',
   'src/DevCachefiles.cxx',

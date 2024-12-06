@@ -4,6 +4,7 @@
 
 #include "Instance.hxx"
 #include "Config.hxx"
+#include "Options.hxx"
 #include "system/Error.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/Open.hxx"
@@ -138,10 +139,10 @@ Instance::Run()
 }
 
 static int
-Run()
+Run(const Options &options)
 {
 	Instance instance{
-		LoadConfigFile("/etc/cachefilesd.conf"),
+		LoadConfigFile(options.configfile),
 	};
 
 #ifdef HAVE_LIBCAP
@@ -162,13 +163,11 @@ Run()
 int
 main(int argc, char **argv) noexcept
 try {
-	// TODO
-	(void)argc;
-	(void)argv;
+	const auto options = ParseCommandLine(argc, argv);
 
 	SetupProcess();
 
-	return Run();
+	return Run(options);
 } catch (...) {
 	PrintException(std::current_exception());
 	return EXIT_FAILURE;
