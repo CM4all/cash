@@ -9,6 +9,7 @@
 #include "io/Open.hxx"
 #include "io/uring/CoOperation.hxx"
 #include "co/InvokeTask.hxx"
+#include "co/Task.hxx"
 #include "util/DeleteDisposer.hxx"
 
 #include <fcntl.h> // for O_DIRECTORY
@@ -76,7 +77,7 @@ Walk::StatItem::Run(Uring::Queue &uring_)
 		while (walk.stat.size() > MAX_STAT)
 			co_await walk.resume_stat;
 
-		walk.AddDirectory(*directory, std::move(name));
+		co_await walk.AddDirectory(*directory, std::move(name));
 	} else if (S_ISREG(stx.stx_mode)) {
 		walk.AddFile(*directory, std::move(name), FileTime{stx.stx_atime.tv_sec},
 			     stx.stx_blocks * 512ULL);
@@ -150,10 +151,14 @@ Walk::ScanDirectory(WalkDirectory &directory)
 	}
 }
 
-inline void
+inline Co::Task<void>
 Walk::AddDirectory(WalkDirectory &parent, std::string &&name)
 try {
-	WalkDirectoryRef directory{WalkDirectoryRef::Adopt{}, *new WalkDirectory(uring, parent, OpenPath(parent.fd, name.c_str(), O_DIRECTORY))};
+	WalkDirectoryRef directory{
+		WalkDirectoryRef::Adopt{},
+		*new WalkDirectory(uring, parent, co_await Uring::CoOpen(uring, parent.fd, name.c_str(), O_PATH|O_DIRECTORY, 0)),
+	};
+
 	ScanDirectory(*directory);
 } catch (...) {
 	fmt::print(stderr, "Failed to scan directory: {}\n", std::current_exception());

@@ -13,6 +13,7 @@
 
 class FileDescriptor;
 namespace Uring { class Queue; }
+namespace Co { template <typename T> class Task; }
 class WalkHandler;
 
 /**
@@ -68,7 +69,7 @@ public:
 	void Start(FileDescriptor root_fd);
 
 private:
-	void AddDirectory(WalkDirectory &parent, std::string &&name);
+	Co::Task<void> AddDirectory(WalkDirectory &parent, std::string &&name);
 	void AddFile(WalkDirectory &parent, std::string &&name,
 		     FileTime atime, uint_least64_t size);
 
