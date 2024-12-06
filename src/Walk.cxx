@@ -159,7 +159,7 @@ try {
 		*new WalkDirectory(uring, parent, co_await Uring::CoOpen(uring, parent.fd, name.c_str(), O_PATH|O_DIRECTORY, 0)),
 	};
 
-	ScanDirectory(*directory, OpenDirectory(directory->fd, "."));
+	ScanDirectory(*directory, co_await Uring::CoOpen(uring, directory->fd, ".", O_DIRECTORY, 0));
 } catch (...) {
 	fmt::print(stderr, "Failed to scan directory: {}\n", std::current_exception());
 }
