@@ -2,7 +2,7 @@ cm4all-cash (0.4) unstable; urgency=low
 
   * cachefilesd.conf: comment out the "secctx" setting
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 09 Dec 2024 14:32:37 +0100
 
 cm4all-cash (0.3) unstable; urgency=low
 
