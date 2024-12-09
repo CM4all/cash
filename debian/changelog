@@ -1,6 +1,6 @@
 cm4all-cash (0.4) unstable; urgency=low
 
-  * 
+  * cachefilesd.conf: comment out the "secctx" setting
 
  --   
 
