@@ -139,10 +139,32 @@ IsSpecialFilename(const char *s) noexcept
 inline void
 Walk::ScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd)
 {
+	// TODO eliminate this method, use only CoScanDirectory
+
 	DirectoryReader r{std::move(fd)};
 	while (const char *name = r.Read()) {
 		if (IsSpecialFilename(name))
 			continue;
+
+		auto *item = new StatItem(*this, directory, name);
+		stat.push_back(*item);
+
+		item->Start(uring);
+	}
+}
+
+inline Co::Task<void>
+Walk::CoScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd)
+{
+	DirectoryReader r{std::move(fd)};
+	while (const char *name = r.Read()) {
+		if (IsSpecialFilename(name))
+			continue;
+
+		/* throttle if there are too many concurrent statx
+                   system calls */
+		while (stat.size() > MAX_STAT) [[unlikely]]
+			co_await resume_stat;
 
 		auto *item = new StatItem(*this, directory, name);
 		stat.push_back(*item);
@@ -159,7 +181,7 @@ try {
 		*new WalkDirectory(uring, parent, co_await Uring::CoOpen(uring, parent.fd, name.c_str(), O_PATH|O_DIRECTORY, 0)),
 	};
 
-	ScanDirectory(*directory, co_await Uring::CoOpen(uring, directory->fd, ".", O_DIRECTORY, 0));
+	co_await CoScanDirectory(*directory, co_await Uring::CoOpen(uring, directory->fd, ".", O_DIRECTORY, 0));
 } catch (...) {
 	fmt::print(stderr, "Failed to scan directory: {}\n", std::current_exception());
 }

@@ -75,6 +75,7 @@ private:
 		     FileTime atime, uint_least64_t size);
 
 	void ScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd);
+	Co::Task<void> CoScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd);
 
 	void OnStatCompletion(StatItem &item) noexcept;
 };
