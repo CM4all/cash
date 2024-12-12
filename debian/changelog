@@ -1,6 +1,7 @@
 cm4all-cash (0.5) unstable; urgency=low
 
   * throttle scanning huge directories (reduce memory usage)
+  * systemd: configure MemoryHigh (to invoke the kernel shrinker)
 
  --   
 
