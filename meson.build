@@ -1,4 +1,4 @@
-project('CM4all Cash', 'cpp', version: '0.3',
+project('CM4all Cash', 'cpp', version: '0.5',
   meson_version: '>= 1.0',
   default_options : [
     'cpp_std=c++20',

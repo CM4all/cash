@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-2-Clause
+// SPDX-License-Identifier: BSD-2-Clause OR GPL-2.0-or-later
 // Copyright CM4all GmbH
 // author: Max Kellermann <max.kellermann@ionos.com>
 
@@ -75,6 +75,7 @@ private:
 		     FileTime atime, uint_least64_t size);
 
 	void ScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd);
+	Co::Task<void> CoScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd);
 
 	void OnStatCompletion(StatItem &item) noexcept;
 };

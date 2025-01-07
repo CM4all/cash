@@ -1,3 +1,16 @@
+cm4all-cash (0.5) unstable; urgency=low
+
+  * throttle scanning huge directories (reduce memory usage)
+  * systemd: configure MemoryHigh (to invoke the kernel shrinker)
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 12 Dec 2024 22:09:26 +0100
+
+cm4all-cash (0.4) unstable; urgency=low
+
+  * cachefilesd.conf: comment out the "secctx" setting
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 09 Dec 2024 14:32:37 +0100
+
 cm4all-cash (0.3) unstable; urgency=low
 
   * implement option "nocull"
@@ -7,7 +20,7 @@ cm4all-cash (0.3) unstable; urgency=low
   * merge redundant fchdir() system calls
   * use io_uring to submit "cull" to /dev/cachefiles
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 09 Dec 2024 11:56:24 +0100
 
 cm4all-cash (0.2) unstable; urgency=low
 
