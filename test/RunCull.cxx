@@ -5,7 +5,6 @@
 #include "Cull.hxx"
 #include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
-#include "event/uring/Manager.hxx"
 #include "system/Error.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/Open.hxx"
@@ -16,6 +15,7 @@
 #include "util/StringBuffer.hxx"
 
 #include <fmt/core.h>
+#include <liburing.h>
 
 #include <optional>
 
@@ -39,27 +39,25 @@ struct Instance final {
 	EventLoop event_loop;
 	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnShutdown)};
 
-	Uring::Manager uring{event_loop, 16384};
-
 	const UniqueFileDescriptor dev_cachefiles = OpenDevCachefiles();
 
 	std::optional<Cull> cull;
 
 	Instance(uint_least64_t cull_files, uint_least64_t cull_bytes)
 	{
-		cull.emplace(event_loop, uring, dev_cachefiles,
+		event_loop.EnableUring(16384, IORING_SETUP_SINGLE_ISSUER|IORING_SETUP_COOP_TASKRUN);
+		cull.emplace(event_loop, *event_loop.GetUring(),
+			     dev_cachefiles,
 			     cull_files, cull_bytes,
 			     BIND_THIS_METHOD(OnCullComplete));
 	}
 
 	void OnShutdown() noexcept {
 		cull.reset();
-		uring.SetVolatile();
 	}
 
 	void OnCullComplete() noexcept {
 		cull.reset();
-		uring.SetVolatile();
 		shutdown_listener.Disable();
 	}
 };

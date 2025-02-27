@@ -8,7 +8,6 @@
 #include "event/Loop.hxx"
 #include "event/PipeEvent.hxx"
 #include "event/ShutdownListener.hxx"
-#include "event/uring/Manager.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "config.h"
 
@@ -27,8 +26,6 @@ class Instance {
 #ifdef HAVE_LIBSYSTEMD
 	Systemd::Watchdog systemd_watchdog{event_loop};
 #endif
-
-	Uring::Manager uring{event_loop, 16384, IORING_SETUP_SINGLE_ISSUER|IORING_SETUP_COOP_TASKRUN};
 
 	UniqueFileDescriptor cache_fd, graveyard_fd;
 
@@ -55,7 +52,6 @@ private:
 	void OnShutdown() noexcept {
 		cull.reset();
 		dev_cachefiles.Cancel();
-		uring.SetVolatile();
 
 #ifdef HAVE_LIBSYSTEMD
 		systemd_watchdog.Disable();

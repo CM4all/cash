@@ -8,6 +8,7 @@
 #include "system/Error.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/Open.hxx"
+#include "io/uring/Queue.hxx"
 #include "util/IterableSplitString.hxx"
 #include "util/PrintException.hxx"
 #include "util/SpanCast.hxx"
@@ -31,6 +32,7 @@
 #include <string>
 
 #include <errno.h>
+#include <fcntl.h> // for O_RDWR
 #include <string.h> // for strerror()
 #include <sys/statvfs.h>
 
@@ -56,7 +58,8 @@ Instance::Instance(const Config &config)
 	:brun(config.brun), frun(config.frun),
 	 culling_disabled(config.culling_disabled)
 {
-	uring.SetMaxWorkers(16, 16);
+	event_loop.EnableUring(16384, IORING_SETUP_SINGLE_ISSUER|IORING_SETUP_COOP_TASKRUN);
+	event_loop.GetUring()->SetMaxWorkers(16, 16);
 
 	dev_cachefiles.Open(OpenDevCachefiles(config).Release());
 	dev_cachefiles.ScheduleRead();
@@ -97,7 +100,8 @@ Instance::StartCull()
 
 	fmt::print(stderr, "Cull: start files={} bytes={}\n", cull_files, cull_bytes);
 
-	cull.emplace(event_loop, uring, dev_cachefiles.GetFileDescriptor(),
+	cull.emplace(event_loop, *event_loop.GetUring(),
+		     dev_cachefiles.GetFileDescriptor(),
 		     cull_files, cull_bytes, BIND_THIS_METHOD(OnCullComplete));
 	cull->Start(cache_fd);
 }

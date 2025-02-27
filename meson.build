@@ -118,7 +118,6 @@ subdir('libcommon/src/io/uring')
 subdir('libcommon/src/system')
 subdir('libcommon/src/event')
 subdir('libcommon/src/event/co')
-subdir('libcommon/src/event/uring')
 
 if libsystemd.found()
   subdir('libcommon/src/net')
@@ -143,7 +142,7 @@ executable('cm4all-cash',
   dependencies: [
     io_linux_dep,
     event_co_dep,
-    event_uring_dep,
+    event_dep,
     util_dep,
     fmt_dep,
     cap_dep,

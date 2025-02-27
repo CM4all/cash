@@ -6,7 +6,7 @@ executable(
   include_directories: inc,
   dependencies: [
     event_co_dep,
-    event_uring_dep,
+    event_dep,
     time_dep,
   ],
 )
@@ -22,7 +22,7 @@ executable(
   include_directories: inc,
   dependencies: [
     event_co_dep,
-    event_uring_dep,
+    event_dep,
     time_dep,
   ],
 )

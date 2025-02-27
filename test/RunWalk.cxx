@@ -7,7 +7,6 @@
 #include "WResult.hxx"
 #include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
-#include "event/uring/Manager.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -16,6 +15,7 @@
 #include "util/StringBuffer.hxx"
 
 #include <fmt/core.h>
+#include <liburing.h>
 
 #include <optional>
 
@@ -23,17 +23,15 @@ struct Instance final : WalkHandler {
 	EventLoop event_loop;
 	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnShutdown)};
 
-	Uring::Manager uring{event_loop, 16384};
-
 	std::optional<Walk> walk;
 
 	Instance() {
+		event_loop.EnableUring(16384, IORING_SETUP_SINGLE_ISSUER|IORING_SETUP_COOP_TASKRUN);
 		shutdown_listener.Enable();
 	}
 
 	void OnShutdown() noexcept {
 		walk.reset();
-		uring.SetVolatile();
 	}
 
 	// virtual methods from WalkHandler
@@ -44,7 +42,6 @@ struct Instance final : WalkHandler {
 	}
 
 	void OnWalkFinished(WalkResult &&result) noexcept override {
-		uring.SetVolatile();
 		shutdown_listener.Disable();
 
 		fmt::print("{} files, {} bytes\n", result.files.size(), result.total_bytes);
@@ -81,7 +78,7 @@ try {
 
 	Instance instance;
 
-	instance.walk.emplace(instance.uring,
+	instance.walk.emplace(*instance.event_loop.GetUring(),
 			      collect_files, collect_bytes,
 			      instance);
 	instance.walk->Start(OpenDirectory(path));
