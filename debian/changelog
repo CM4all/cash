@@ -1,5 +1,6 @@
 cm4all-cash (0.6) unstable; urgency=low
 
+  * switch main loop to io_uring instead of epoll
   * systemd: increase TasksMax to 40 (for io_uring workers)
 
  --   
