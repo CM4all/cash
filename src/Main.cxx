@@ -56,6 +56,8 @@ Instance::Instance(const Config &config)
 	:brun(config.brun), frun(config.frun),
 	 culling_disabled(config.culling_disabled)
 {
+	uring.SetMaxWorkers(16, 16);
+
 	dev_cachefiles.Open(OpenDevCachefiles(config).Release());
 	dev_cachefiles.ScheduleRead();
 
