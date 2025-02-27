@@ -28,7 +28,7 @@ class Instance {
 	Systemd::Watchdog systemd_watchdog{event_loop};
 #endif
 
-	Uring::Manager uring{event_loop, 16384};
+	Uring::Manager uring{event_loop, 16384, IORING_SETUP_SINGLE_ISSUER|IORING_SETUP_COOP_TASKRUN};
 
 	UniqueFileDescriptor cache_fd, graveyard_fd;
 
