@@ -19,7 +19,6 @@ DevCachefiles::DevCachefiles(EventLoop &event_loop, UniqueFileDescriptor _fd,
 	:device(event_loop, BIND_THIS_METHOD(OnDeviceReady), _fd.Release()),
 	 cull_callback(_cull_callback)
 {
-	device.ScheduleRead();
 }
 
 DevCachefiles::~DevCachefiles() noexcept

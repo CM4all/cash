@@ -67,6 +67,7 @@ Instance::Instance(const Config &config)
 	// TODO implement graveyeard reaper
 
 	shutdown_listener.Enable();
+	dev_cachefiles.Enable();
 }
 
 inline
@@ -105,11 +106,17 @@ inline void
 Instance::OnCullComplete() noexcept
 {
 	cull.reset();
+
+	/* re-enable polling /dev/cachefiles */
+	dev_cachefiles.Enable();
 }
 
 inline void
 Instance::OnCull() noexcept
 {
+	/* disable polling /dev/cachefiles while we're culling */
+	dev_cachefiles.Disable();
+
 	if (!cull && !culling_disabled)
 		StartCull();
 }

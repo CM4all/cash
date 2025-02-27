@@ -37,6 +37,10 @@ public:
 		return device.GetFileDescriptor();
 	}
 
+	void Enable() noexcept {
+		device.ScheduleWrite();
+	}
+
 	void Disable() noexcept {
 		device.Cancel();
 	}
