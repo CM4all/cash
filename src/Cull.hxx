@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "DevCachefiles.hxx"
 #include "WHandler.hxx"
 #include "Chdir.hxx"
 #include "event/DeferEvent.hxx"
@@ -20,6 +19,7 @@
 
 namespace Co { class InvokeTask; }
 namespace Uring { class Queue; }
+class DevCachefiles;
 class Walk;
 class WalkDirectoryRef;
 
@@ -30,7 +30,7 @@ class WalkDirectoryRef;
  */
 class Cull final : WalkHandler {
 	Uring::Queue &uring;
-	DevCachefiles dev_cachefiles;
+	DevCachefiles &dev_cachefiles;
 
 	using Callback = BoundMethod<void() noexcept>;
 	const Callback callback;
@@ -56,7 +56,7 @@ class Cull final : WalkHandler {
 public:
 	[[nodiscard]]
 	Cull(EventLoop &event_loop, Uring::Queue &_uring,
-	     FileDescriptor _dev_cachefiles,
+	     DevCachefiles &_dev_cachefiles,
 	     std::size_t _cull_files, uint_least64_t _cull_bytes,
 	     Callback _callback);
 	~Cull() noexcept;

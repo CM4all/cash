@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Cull.hxx"
+#include "DevCachefiles.hxx"
 #include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "system/Error.hxx"
@@ -39,7 +40,7 @@ struct Instance final {
 	EventLoop event_loop;
 	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnShutdown)};
 
-	const UniqueFileDescriptor dev_cachefiles = OpenDevCachefiles();
+	DevCachefiles dev_cachefiles{event_loop, OpenDevCachefiles(), BIND_THIS_METHOD(OnCull)};
 
 	std::optional<Cull> cull;
 
@@ -55,6 +56,8 @@ struct Instance final {
 	void OnShutdown() noexcept {
 		cull.reset();
 	}
+
+	void OnCull() noexcept {}
 
 	void OnCullComplete() noexcept {
 		cull.reset();

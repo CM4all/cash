@@ -4,6 +4,7 @@
 
 #include "Cull.hxx"
 #include "Walk.hxx"
+#include "DevCachefiles.hxx"
 #include "io/uring/CoOperation.hxx"
 #include "system/Error.hxx"
 #include "co/InvokeTask.hxx"
@@ -73,7 +74,7 @@ private:
 };
 
 Cull::Cull(EventLoop &event_loop, Uring::Queue &_uring,
-	   FileDescriptor _dev_cachefiles,
+	   DevCachefiles &_dev_cachefiles,
 	   uint_least64_t _cull_files, std::size_t _cull_bytes,
 	   Callback _callback)
 	:uring(_uring), dev_cachefiles(_dev_cachefiles),

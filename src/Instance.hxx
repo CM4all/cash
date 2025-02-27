@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "DevCachefiles.hxx"
 #include "Cull.hxx"
 #include "event/Loop.hxx"
 #include "event/PipeEvent.hxx"
@@ -29,7 +30,7 @@ class Instance {
 
 	UniqueFileDescriptor cache_fd, graveyard_fd;
 
-	PipeEvent dev_cachefiles{event_loop, BIND_THIS_METHOD(OnDevCachefiles)};
+	DevCachefiles dev_cachefiles;
 
 	std::optional<Cull> cull;
 
@@ -44,14 +45,13 @@ public:
 	void Run();
 
 private:
-	void OnDevCachefiles(unsigned events) noexcept;
-
+	void OnCull() noexcept;
 	void StartCull();
 	void OnCullComplete() noexcept;
 
 	void OnShutdown() noexcept {
 		cull.reset();
-		dev_cachefiles.Cancel();
+		dev_cachefiles.Disable();
 
 #ifdef HAVE_LIBSYSTEMD
 		systemd_watchdog.Disable();

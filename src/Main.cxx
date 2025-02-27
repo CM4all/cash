@@ -9,10 +9,8 @@
 #include "system/SetupProcess.hxx"
 #include "io/Open.hxx"
 #include "io/uring/Queue.hxx"
-#include "util/IterableSplitString.hxx"
 #include "util/PrintException.hxx"
 #include "util/SpanCast.hxx"
-#include "util/StringSplit.hxx"
 #include "config.h"
 
 #include <fmt/core.h>
@@ -55,14 +53,12 @@ OpenDevCachefiles(const Config &config)
 
 inline
 Instance::Instance(const Config &config)
-	:brun(config.brun), frun(config.frun),
+	:dev_cachefiles(event_loop, OpenDevCachefiles(config), BIND_THIS_METHOD(OnCull)),
+	 brun(config.brun), frun(config.frun),
 	 culling_disabled(config.culling_disabled)
 {
 	event_loop.EnableUring(16384, IORING_SETUP_SINGLE_ISSUER|IORING_SETUP_COOP_TASKRUN);
 	event_loop.GetUring()->SetMaxWorkers(16, 16);
-
-	dev_cachefiles.Open(OpenDevCachefiles(config).Release());
-	dev_cachefiles.ScheduleRead();
 
 	const auto fscache_fd = OpenPath(config.dir.c_str(), O_DIRECTORY);
 	cache_fd = OpenPath(fscache_fd, "cache", O_DIRECTORY);
@@ -76,7 +72,6 @@ Instance::Instance(const Config &config)
 inline
 Instance::~Instance() noexcept
 {
-	dev_cachefiles.Close();
 }
 
 inline void
@@ -101,7 +96,7 @@ Instance::StartCull()
 	fmt::print(stderr, "Cull: start files={} bytes={}\n", cull_files, cull_bytes);
 
 	cull.emplace(event_loop, *event_loop.GetUring(),
-		     dev_cachefiles.GetFileDescriptor(),
+		     dev_cachefiles,
 		     cull_files, cull_bytes, BIND_THIS_METHOD(OnCullComplete));
 	cull->Start(cache_fd);
 }
@@ -110,31 +105,12 @@ inline void
 Instance::OnCullComplete() noexcept
 {
 	cull.reset();
-
-	dev_cachefiles.ScheduleRead();
 }
 
 inline void
-Instance::OnDevCachefiles([[maybe_unused]] unsigned events) noexcept
+Instance::OnCull() noexcept
 {
-	char buffer[1024];
-	ssize_t nbytes = dev_cachefiles.GetFileDescriptor().Read(std::as_writable_bytes(std::span{buffer}));
-	if (nbytes <= 0) {
-		// TODO
-		dev_cachefiles.CancelRead();
-		return;
-	}
-
-	const std::string_view line{buffer, static_cast<std::size_t>(nbytes)};
-
-	bool start_cull = false;
-	for (const std::string_view i : IterableSplitString(line, ' ')) {
-		const auto [name, value] = Split(i, '=');
-		if (name == "cull"sv)
-			start_cull = value != "0"sv;
-	}
-
-	if (start_cull && !cull && !culling_disabled)
+	if (!cull && !culling_disabled)
 		StartCull();
 }
 
