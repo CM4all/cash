@@ -26,7 +26,7 @@ IOSchedulingClass=idle
 # Resource limits
 MemoryMax=8G
 MemoryHigh=7G
-TasksMax=4
+TasksMax=40
 LimitNOFILE=1048576
 
 # Security settings
