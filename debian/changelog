@@ -4,7 +4,7 @@ cm4all-cash (0.6) unstable; urgency=low
   * poll for writing on /dev/cachefiles
   * systemd: increase TasksMax to 40 (for io_uring workers)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 28 Feb 2025 15:29:28 +0100
 
 cm4all-cash (0.5) unstable; urgency=low
 
