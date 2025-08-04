@@ -31,6 +31,10 @@ static constexpr std::size_t MAX_STAT = 16 * 1024;
  */
 static constexpr std::size_t RESUME_STAT = 4 * 1024;
 
+/**
+ * While walking the filesystem, discard all files that were accessed
+ * at least this time ago.
+ */
 static constexpr FileTime DISCARD_OLDER_THAN = std::chrono::hours{120 * 24};
 
 class Walk::StatItem : public IntrusiveListHook<> {
