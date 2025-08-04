@@ -11,20 +11,20 @@ cm4all-cash (0.6) unstable; urgency=low
   * poll for writing on /dev/cachefiles
   * systemd: increase TasksMax to 40 (for io_uring workers)
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 28 Feb 2025 15:29:28 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 28 Feb 2025 15:29:28 +0100
 
 cm4all-cash (0.5) unstable; urgency=low
 
   * throttle scanning huge directories (reduce memory usage)
   * systemd: configure MemoryHigh (to invoke the kernel shrinker)
 
- -- Max Kellermann <mk@cm4all.com>  Thu, 12 Dec 2024 22:09:26 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 12 Dec 2024 22:09:26 +0100
 
 cm4all-cash (0.4) unstable; urgency=low
 
   * cachefilesd.conf: comment out the "secctx" setting
 
- -- Max Kellermann <mk@cm4all.com>  Mon, 09 Dec 2024 14:32:37 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 09 Dec 2024 14:32:37 +0100
 
 cm4all-cash (0.3) unstable; urgency=low
 
@@ -35,7 +35,7 @@ cm4all-cash (0.3) unstable; urgency=low
   * merge redundant fchdir() system calls
   * use io_uring to submit "cull" to /dev/cachefiles
 
- -- Max Kellermann <mk@cm4all.com>  Mon, 09 Dec 2024 11:56:24 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 09 Dec 2024 11:56:24 +0100
 
 cm4all-cash (0.2) unstable; urgency=low
 
@@ -44,10 +44,10 @@ cm4all-cash (0.2) unstable; urgency=low
   * systemd: add "RequiresMountsFor" and "CacheDirectory"
   * systemd: change "WantedBy" to "remote-fs.target"
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 03 Dec 2024 10:56:13 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 03 Dec 2024 10:56:13 +0100
 
 cm4all-cash (0.1) unstable; urgency=low
 
   * initial release
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 29 Nov 2024 15:11:04 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 29 Nov 2024 15:11:04 +0100
