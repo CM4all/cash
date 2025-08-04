@@ -1,5 +1,6 @@
 cm4all-cash (0.7) unstable; urgency=low
 
+  * switch to C++23
   * require Meson 1.2 (for C++23 support)
 
  --   

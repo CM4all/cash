@@ -25,7 +25,7 @@ Building cash
 You need:
 
 - Linux kernel with ``CONFIG_CACHEFILES=y``
-- a C++20 compliant compiler
+- a C++23 compliant compiler
 - `libfmt <https://fmt.dev/>`__
 - `Meson 1.2 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
 
