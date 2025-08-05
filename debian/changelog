@@ -1,5 +1,6 @@
 cm4all-cash (0.7) unstable; urgency=low
 
+  * cull 2% more in each run (to compensate for new files being added)
   * switch to C++23
   * require Meson 1.2 (for C++23 support)
 

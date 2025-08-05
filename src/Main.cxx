@@ -51,10 +51,23 @@ OpenDevCachefiles(const Config &config)
 	return fd;
 }
 
+/**
+ * Add 2% to the configured BRUN / FRUN values to compensate for files
+ * being added while we're culling.
+ *
+ * If each Cull operation attempts to reach exactly BRUN / FRUN, it
+ * will fail to meet that goal because new files are being added
+ * during the Cull, and another Cull will be started right after that,
+ * which will again fail to meet the goal, leaving the daemon in an
+ * endless culling loop.
+ */
+static constexpr uint_least8_t RUN_PERCENT_OFFSET = 2;
+
 inline
 Instance::Instance(const Config &config)
 	:dev_cachefiles(event_loop, OpenDevCachefiles(config), BIND_THIS_METHOD(OnCull)),
-	 brun(config.brun), frun(config.frun),
+	 brun(config.brun + RUN_PERCENT_OFFSET),
+	 frun(config.frun + RUN_PERCENT_OFFSET),
 	 culling_disabled(config.culling_disabled)
 {
 	event_loop.EnableUring(16384, IORING_SETUP_SINGLE_ISSUER|IORING_SETUP_COOP_TASKRUN);
