@@ -4,7 +4,7 @@ cm4all-cash (0.7) unstable; urgency=low
   * switch to C++23
   * require Meson 1.2 (for C++23 support)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 05 Aug 2025 15:11:47 +0200
 
 cm4all-cash (0.6) unstable; urgency=low
 
