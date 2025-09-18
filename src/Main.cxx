@@ -7,6 +7,7 @@
 #include "Options.hxx"
 #include "system/Error.hxx"
 #include "system/SetupProcess.hxx"
+#include "io/FileAt.hxx"
 #include "io/Open.hxx"
 #include "io/uring/Queue.hxx"
 #include "util/PrintException.hxx"
@@ -74,8 +75,8 @@ Instance::Instance(const Config &config)
 	event_loop.GetUring()->SetMaxWorkers(16, 16);
 
 	const auto fscache_fd = OpenPath(config.dir.c_str(), O_DIRECTORY);
-	cache_fd = OpenPath(fscache_fd, "cache", O_DIRECTORY);
-	graveyard_fd = OpenPath(fscache_fd, "graveyard", O_DIRECTORY);
+	cache_fd = OpenPath({fscache_fd, "cache"}, O_DIRECTORY);
+	graveyard_fd = OpenPath({fscache_fd, "graveyard"}, O_DIRECTORY);
 
 	// TODO implement graveyeard reaper
 

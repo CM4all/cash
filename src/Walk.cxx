@@ -6,6 +6,7 @@
 #include "WHandler.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
 #include "io/DirectoryReader.hxx"
+#include "io/FileAt.hxx"
 #include "io/Open.hxx"
 #include "io/uring/CoOperation.hxx"
 #include "co/InvokeTask.hxx"
@@ -106,8 +107,8 @@ Walk::~Walk() noexcept
 void
 Walk::Start(FileDescriptor root_fd)
 {
-	WalkDirectoryRef root{WalkDirectoryRef::Adopt{}, *new WalkDirectory(uring, WalkDirectory::RootTag{}, OpenPath(root_fd, ".", O_DIRECTORY))};
-	ScanDirectory(*root, OpenDirectory(root_fd, "."));
+	WalkDirectoryRef root{WalkDirectoryRef::Adopt{}, *new WalkDirectory(uring, WalkDirectory::RootTag{}, OpenPath({root_fd, "."}, O_DIRECTORY))};
+	ScanDirectory(*root, OpenDirectory({root_fd, "."}));
 }
 
 inline void
