@@ -61,9 +61,9 @@ private:
 	[[nodiscard]]
 	Co::InvokeTask Run(Uring::Queue &uring);
 
-	void OnCompletion(std::exception_ptr error) noexcept {
+	void OnCompletion(std::exception_ptr &&error) noexcept {
 		if (error)
-			fmt::print(stderr, "Stat error: {}\n", error); // TODO handle properly
+			fmt::print(stderr, "Stat error: {}\n", std::move(error)); // TODO handle properly
 
 		walk.OnStatCompletion(*this);
 	}

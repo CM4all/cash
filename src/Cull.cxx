@@ -66,7 +66,7 @@ public:
 	}
 
 private:
-	void OnComplete(std::exception_ptr error) noexcept {
+	void OnComplete(std::exception_ptr &&error) noexcept {
 		(void)error; // TODO
 
 		cull.OperationFinished(*this);
