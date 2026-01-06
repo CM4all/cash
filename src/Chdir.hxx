@@ -6,10 +6,10 @@
 
 #include "event/DeferEvent.hxx"
 #include "io/FileDescriptor.hxx"
-#include "co/Compat.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/SharedLease.hxx"
 
+#include <coroutine>
 #include <map>
 
 /**
