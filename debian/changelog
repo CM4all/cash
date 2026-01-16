@@ -1,6 +1,6 @@
 cm4all-cash (0.8) unstable; urgency=low
 
-  * 
+  * io_uring: disable the iowait state
 
  --   
 
