@@ -140,7 +140,7 @@ struct WalkResult {
 		}
 	};
 
-	static constexpr std::size_t MAX_FILES = 1024 * 1024;
+	static constexpr std::size_t MAX_FILES = 8 * 1024 * 1024;
 
 	/**
 	 * A max-heap #File objects by time of last access, newest at
