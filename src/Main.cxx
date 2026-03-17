@@ -35,6 +35,10 @@
 #include <string.h> // for strerror()
 #include <sys/statvfs.h>
 
+#ifdef HAVE_MALLOC_TRIM
+#include <malloc.h> // for malloc_trim()
+#endif
+
 using std::string_view_literals::operator""sv;
 
 static UniqueFileDescriptor
@@ -120,6 +124,10 @@ inline void
 Instance::OnCullComplete() noexcept
 {
 	cull.reset();
+
+#ifdef HAVE_MALLOC_TRIM
+	malloc_trim(0);
+#endif
 
 	/* re-enable polling /dev/cachefiles */
 	dev_cachefiles.Enable();

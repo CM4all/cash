@@ -127,6 +127,7 @@ endif
 
 conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
 conf.set('HAVE_LIBCAP', cap_dep.found())
+conf.set('HAVE_MALLOC_TRIM', compiler.has_function('malloc_trim', prefix: '#include <malloc.h>'))
 configure_file(output: 'config.h', configuration: conf)
 
 executable('cm4all-cash',

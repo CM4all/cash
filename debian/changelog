@@ -2,6 +2,7 @@ cm4all-cash (0.8) unstable; urgency=low
 
   * switch from RBTree to max-heap
   * collect up to 8 million files for culling
+  * return memory to kernel after culling completes
   * io_uring: disable the iowait state
   * fix build with glibc 2.43
 
