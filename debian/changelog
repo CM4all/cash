@@ -6,7 +6,7 @@ cm4all-cash (0.8) unstable; urgency=low
   * io_uring: disable the iowait state
   * fix build with glibc 2.43
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Mar 2026 18:14:45 +0100
 
 cm4all-cash (0.7) unstable; urgency=low
 
