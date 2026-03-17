@@ -18,8 +18,6 @@
 
 #include <fmt/core.h> // TODO
 
-static constexpr std::size_t MAX_FILES = 1024 * 1024;
-
 /**
  * Limit on the number of concurrent statx() system calls.  Scanning
  * new directories is suspended until we're below #RESUME_STAT.
@@ -120,18 +118,15 @@ Walk::AddFile(WalkDirectory &parent, std::string &&name,
 		return;
 	}
 
-	while (result.files.size() >= MAX_FILES ||
-	       (result.files.size() >= collect_files && result.total_bytes > collect_bytes)) {
-		auto &f = result.files.front();
-		result.total_bytes -= f.size;
-		result.files.pop_front();
-		delete &f;
-	}
+	if (!result.PreparePush(atime))
+		/* heap is full and this file is more recent than the
+		   newest on the heap - not a candidate */
+		return;
 
-	auto *file = new File(parent, std::move(name), atime, size);
-	result.files.insert(*file);
+	result.Emplace(parent, std::move(name), atime, size);
 
-	result.total_bytes += file->size;
+	while (result.files.size() > collect_files && result.total_bytes > collect_bytes)
+		result.Pop();
 }
 
 [[gnu::pure]]

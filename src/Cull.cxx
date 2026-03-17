@@ -112,16 +112,9 @@ Cull::OnWalkFinished(WalkResult &&result) noexcept
 	fmt::print(stderr, "Cull: delete {} files, {} bytes\n",
 		   result.files.size(), result.total_bytes);
 
-	result.files.clear_and_dispose([&](WalkResult::File *file){
-#ifndef NDEBUG
-		result.total_bytes -= file->size;
-#endif
-
-		AddOperation(CullFile(std::move(file->parent), std::move(file->name), file->size));
-		delete file;
-	});
-
-	assert(result.total_bytes == 0);
+	for (auto &file : result.files) {
+		AddOperation(CullFile(std::move(file.parent), std::move(file.name), file.size));
+	}
 
 	walk.reset();
 

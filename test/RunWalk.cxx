@@ -17,13 +17,14 @@
 #include <fmt/core.h>
 #include <liburing.h>
 
+#include <memory>
 #include <optional>
 
 struct Instance final : WalkHandler {
 	EventLoop event_loop;
 	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnShutdown)};
 
-	std::optional<Walk> walk;
+	std::unique_ptr<Walk> walk;
 
 	Instance() {
 		event_loop.EnableUring(16384, IORING_SETUP_SINGLE_ISSUER|IORING_SETUP_COOP_TASKRUN);
@@ -80,9 +81,9 @@ try {
 
 	Instance instance;
 
-	instance.walk.emplace(*instance.event_loop.GetUring(),
-			      collect_files, collect_bytes,
-			      instance);
+	instance.walk = std::make_unique<Walk>(*instance.event_loop.GetUring(),
+					       collect_files, collect_bytes,
+					       instance);
 	instance.walk->Start(OpenDirectory(path));
 
 	if (instance.walk)

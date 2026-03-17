@@ -7,8 +7,9 @@
 #include "io/uring/Close.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/DeleteDisposer.hxx"
-#include "util/IntrusiveTreeSet.hxx"
+#include "util/StaticVector.hxx"
 
+#include <algorithm> // for std::push_heap(), std::pop_heap()
 #include <cassert>
 #include <chrono>
 #include <utility> // for std::exchange()
@@ -91,7 +92,11 @@ public:
 			directory->Unref();
 	}
 
-	WalkDirectoryRef &operator=(const WalkDirectoryRef &) = delete;
+	WalkDirectoryRef &operator=(WalkDirectoryRef &&src) noexcept {
+		using std::swap;
+		swap(directory, src.directory);
+		return *this;
+	}
 
 	[[nodiscard]]
 	WalkDirectory &operator*() const noexcept{
@@ -112,12 +117,12 @@ public:
  * The result struct for #Walk, passed to #WalkHandler.
  */
 struct WalkResult {
-	struct File final : IntrusiveTreeSetHook<> {
+	struct File final {
 		WalkDirectoryRef parent;
 
-		const FileTime time;
+		FileTime time;
 
-		const uint_least64_t size;
+		uint_least64_t size;
 
 		std::string name;
 
@@ -127,46 +132,66 @@ struct WalkResult {
 			:parent(_parent), time(_time), size(_size),
 			name(std::move(_name)) {}
 
-		File(const File &) = delete;
-		File &operator=(const File &) = delete;
-	};
+		File(File &&) noexcept = default;
+		File &operator=(File &&) noexcept = default;
 
-	struct GetTime {
-		constexpr FileTime operator()(const File &file) const noexcept {
-			return file.time;
+		constexpr bool operator<(const File &other) const noexcept {
+			return time < other.time;
 		}
 	};
 
-	/**
-	 * This uses reverse comparison so we have the newest items
-	 * first.  When the tree is full, the first item is removed,
-	 * leaving older items in the list.
-	 */
-	struct ReverseCompareTime {
-		constexpr std::weak_ordering operator()(FileTime a, FileTime b) const noexcept {
-			return b <=> a;
-		}
-	};
-
-	using TimeSortedFiles = IntrusiveTreeSet<File,
-		IntrusiveTreeSetOperators<File, GetTime, ReverseCompareTime>,
-		IntrusiveTreeSetBaseHookTraits<File>,
-		IntrusiveTreeSetOptions{.constant_time_size=true}>;
+	static constexpr std::size_t MAX_FILES = 1024 * 1024;
 
 	/**
-	 * A tree of #File objects sorted by time of last access,
-	 * newest first.  This is where we collect files that were
-	 * just scanned.  At the end of the scan, all files that
-	 * remain in this list will be deleted.
+	 * A max-heap #File objects by time of last access, newest at
+	 * the top.  This is where we collect files that were just
+	 * scanned.  At the end of the scan, all files that remain in
+	 * this list will be deleted.
 	 */
-	TimeSortedFiles files;
+	StaticVector<File, MAX_FILES> files;
 
 	/**
 	 * The total size of all #files [bytes].
 	 */
 	uint_least64_t total_bytes = 0;
 
-	~WalkResult() noexcept {
-		files.clear_and_dispose(DeleteDisposer{});
+	/**
+	 * Pop the most recently accessed file from the heap.
+	 */
+	void Pop() noexcept {
+		total_bytes -= files.front().size;
+		std::pop_heap(files.begin(), files.end());
+		files.pop_back();
+	}
+
+	/**
+	 * Prepare for pushing a new file on the heap.  Evicts the
+	 * most recently accessed file if the heap is already full.
+	 * Returns false if the specified time is more recent than the
+	 * top of this heap (and thus the file is not a candidate and
+	 * must not be pushed).
+	 */
+	[[nodiscard]]
+	bool PreparePush(FileTime new_time) noexcept {
+		if (files.full()) {
+			if (new_time >= files.front().time)
+				return false;
+
+			Pop();
+		}
+
+		return true;
+	}
+
+	/**
+	 * Construct a file in-place on the heap.
+	 */
+	void Emplace(WalkDirectory &parent, std::string &&name,
+		     FileTime time, const uint_least64_t size) noexcept {
+		assert(!files.full());
+
+		total_bytes += size;
+		files.emplace_back(parent, std::move(name), time, size);
+		std::push_heap(files.begin(), files.end());
 	}
 };
