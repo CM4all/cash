@@ -51,6 +51,8 @@ struct Instance final : WalkHandler {
 				   FormatISO8601(std::chrono::system_clock::from_time_t(file.time.count())).c_str(),
 				   file.size,
 				   file.name);
+
+		walk.reset();
 	}
 };
 
