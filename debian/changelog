@@ -1,6 +1,6 @@
 cm4all-cash (0.9) unstable; urgency=low
 
-  * 
+  * fix use-after-free crash bug
 
  --   
 
