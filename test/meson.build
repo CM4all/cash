@@ -4,6 +4,23 @@ gtest = dependency('gtest', main: true,
                    required: get_option('test'),
                    fallback: ['gtest', 'gtest_main_dep'])
 
+test(
+  'TestChdir',
+  executable(
+    'TestChdir',
+    'TestChdir.cxx',
+    '../src/Chdir.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      event_co_dep,
+      event_dep,
+      io_dep,
+      util_dep,
+    ],
+  ),
+)
+
 executable(
   'RunWalk',
   'RunWalk.cxx',
