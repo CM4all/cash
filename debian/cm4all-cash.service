@@ -44,7 +44,7 @@ ProtectKernelTunables=yes
 ProtectProc=noaccess
 ProtectSystem=full
 RestrictAddressFamilies=AF_UNIX
-RestrictFileSystems=ext4
+RestrictFileSystems=ext3 ext4 btrfs xfs
 RestrictNamespaces=yes
 RestrictRealtime=yes
 
