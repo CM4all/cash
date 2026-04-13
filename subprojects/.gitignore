@@ -1,4 +1,6 @@
 /packagecache/
-/fmt-*/
-/liburing-*/
 /.wraplock
+
+/fmt-*/
+/googletest-*/
+/liburing-*/

@@ -35,6 +35,7 @@ jobs:
             meson \
             ccache \
             libfmt-dev \
+            libgtest-dev \
             libcap-dev \
             liburing-dev \
             libsystemd-dev
@@ -47,7 +48,6 @@ jobs:
       - name: Configure
         run: |
           meson setup \
-            -Dtest=true \
             -Dauto_features=enabled \
             -Dwrap_mode=nofallback \
             output

@@ -155,7 +155,9 @@ executable('cm4all-cash',
 
 install_data('cachefilesd.conf', install_dir: get_option('sysconfdir'))
 
-if get_option('test')
+if get_option('test').allowed()
   subdir('libcommon/src/time')
   subdir('test')
+  subdir('libcommon/test/util')
+  subdir('libcommon/test/co')
 endif
