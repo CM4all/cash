@@ -15,18 +15,23 @@
 
 class UniqueFileDescriptor;
 
+class DevCachefilesHandler {
+public:
+	virtual void OnDevCachefilesStartCull() noexcept = 0;
+};
+
 /**
  * OO wrapper for a /dev/cachefiles file descriptor (non-owning).
  */
 class DevCachefiles {
 	PipeEvent device;
 
-	BoundMethod<void() noexcept> cull_callback;
+	DevCachefilesHandler &handler;
 
 public:
 	[[nodiscard]]
 	DevCachefiles(EventLoop &event_loop, UniqueFileDescriptor _fd,
-		      BoundMethod<void() noexcept> _cull_callback) noexcept;
+		      DevCachefilesHandler &_handler) noexcept;
 
 	~DevCachefiles() noexcept;
 

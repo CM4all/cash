@@ -36,11 +36,11 @@ OpenDevCachefiles()
 	return fd;
 }
 
-struct Instance final {
+struct Instance final : DevCachefilesHandler {
 	EventLoop event_loop;
 	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnShutdown)};
 
-	DevCachefiles dev_cachefiles{event_loop, OpenDevCachefiles(), BIND_THIS_METHOD(OnCull)};
+	DevCachefiles dev_cachefiles{event_loop, OpenDevCachefiles(), *this};
 
 	std::optional<Cull> cull;
 
@@ -57,11 +57,14 @@ struct Instance final {
 		cull.reset();
 	}
 
-	void OnCull() noexcept {}
-
 	void OnCullComplete() noexcept {
 		cull.reset();
 		shutdown_listener.Disable();
+	}
+
+private:
+	// virtual methods from DevCachefilesHandler
+	void OnDevCachefilesStartCull() noexcept override {
 	}
 };
 

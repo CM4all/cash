@@ -20,7 +20,7 @@
 
 struct Config;
 
-class Instance {
+class Instance final : DevCachefilesHandler {
 	EventLoop event_loop;
 	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnShutdown)};
 
@@ -45,7 +45,6 @@ public:
 	void Run();
 
 private:
-	void OnCull() noexcept;
 	void StartCull();
 	void OnCullComplete() noexcept;
 
@@ -57,4 +56,7 @@ private:
 		systemd_watchdog.Disable();
 #endif
 	}
+
+	// virtual methods from DevCachefilesHandler
+	void OnDevCachefilesStartCull() noexcept override;
 };

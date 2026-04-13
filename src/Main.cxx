@@ -70,7 +70,7 @@ static constexpr uint_least8_t RUN_PERCENT_OFFSET = 2;
 
 inline
 Instance::Instance(const Config &config)
-	:dev_cachefiles(event_loop, OpenDevCachefiles(config), BIND_THIS_METHOD(OnCull)),
+	:dev_cachefiles(event_loop, OpenDevCachefiles(config), *this),
 	 brun(config.brun + RUN_PERCENT_OFFSET),
 	 frun(config.frun + RUN_PERCENT_OFFSET),
 	 culling_disabled(config.culling_disabled)
@@ -133,8 +133,8 @@ Instance::OnCullComplete() noexcept
 	dev_cachefiles.Enable();
 }
 
-inline void
-Instance::OnCull() noexcept
+void
+Instance::OnDevCachefilesStartCull() noexcept
 {
 	/* disable polling /dev/cachefiles while we're culling */
 	dev_cachefiles.Disable();

@@ -15,9 +15,9 @@
 using std::string_view_literals::operator""sv;
 
 DevCachefiles::DevCachefiles(EventLoop &event_loop, UniqueFileDescriptor _fd,
-			     BoundMethod<void() noexcept> _cull_callback) noexcept
+			     DevCachefilesHandler &_handler) noexcept
 	:device(event_loop, BIND_THIS_METHOD(OnDeviceReady), _fd.Release()),
-	 cull_callback(_cull_callback)
+	 handler(_handler)
 {
 }
 
@@ -47,7 +47,7 @@ DevCachefiles::OnDeviceReady([[maybe_unused]] unsigned events) noexcept
 	}
 
 	if (start_cull)
-		cull_callback();
+		handler.OnDevCachefilesStartCull();
 }
 
 std::span<const std::byte>
