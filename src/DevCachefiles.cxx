@@ -53,7 +53,7 @@ DevCachefiles::OnDeviceReady([[maybe_unused]] unsigned events) noexcept
 std::span<const std::byte>
 DevCachefiles::FormatCullFile(Buffer &buffer, std::string_view filename) noexcept
 {
-	if (filename.size() >= NAME_MAX)
+	if (filename.size() > NAME_MAX)
 		return {};
 
 	auto i = fmt::format_to(buffer.data(), "cull {}", filename);
