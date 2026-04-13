@@ -107,6 +107,13 @@ Walk::Start(FileDescriptor root_fd)
 {
 	WalkDirectoryRef root{WalkDirectoryRef::Adopt{}, *new WalkDirectory(uring, WalkDirectory::RootTag{}, OpenPath({root_fd, "."}, O_DIRECTORY))};
 	ScanDirectory(*root, OpenDirectory({root_fd, "."}));
+
+	if (stat.empty())
+		/* ScanDirectory() has left the "stat" list empty
+		   (because the given directory was empty), thus
+		   OnStatCompletion() will never be called and we have
+		   to invoke OnWalkFinished() from here */
+		handler.OnWalkFinished(std::move(result));
 }
 
 inline void
