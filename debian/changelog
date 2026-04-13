@@ -1,6 +1,6 @@
 cm4all-cash (0.9) unstable; urgency=low
 
-  * fix use-after-free crash bug
+  * fix two use-after-free crash bugs
   * fix off-by-one error in the NAME_MAX check
   * abort on /dev/cachefiles error
   * add unit tests

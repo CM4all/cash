@@ -62,7 +62,7 @@ Chdir::Next() noexcept
 		   below has finished */
 		defer_next.Schedule();
 
-		list.clear_and_dispose([](auto *i){
+		tmp.clear_and_dispose([](auto *i){
 			assert(i->continuation);
 
 			i->continuation.resume();
