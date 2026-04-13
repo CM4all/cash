@@ -27,8 +27,7 @@ PrintHelp(const char *argv0) noexcept
 	if (argv0 == nullptr)
 		argv0 = "cm4all-cash";
 
-	fmt::print(stderr,
-		   "Format:\n"
+	fmt::print("Format:\n"
 		   "  {} [-f <configfile>]\n"
 		   "  {} -v\n"
 		   "\n"
@@ -46,7 +45,7 @@ ParseCommandLine(int argc, char **argv) noexcept
 	/* handle help request */
 	if (argc == 2 && strcmp(argv[1], "--help") == 0) {
 		PrintHelp(argv[0]);
-		exit(EXIT_FAILURE);
+		exit(EXIT_SUCCESS);
 	}
 
 	if (argc == 2 && strcmp(argv[1], "--version") == 0) {
