@@ -59,4 +59,7 @@ private:
 
 	// virtual methods from DevCachefilesHandler
 	void OnDevCachefilesStartCull() noexcept override;
+
+	[[noreturn]]
+	void OnDevCachefilesError(std::exception_ptr &&error) noexcept override;
 };

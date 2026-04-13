@@ -8,6 +8,7 @@
 #include "util/StringBuffer.hxx"
 
 #include <cstddef>
+#include <exception>
 #include <span>
 #include <string_view>
 
@@ -18,6 +19,7 @@ class UniqueFileDescriptor;
 class DevCachefilesHandler {
 public:
 	virtual void OnDevCachefilesStartCull() noexcept = 0;
+	virtual void OnDevCachefilesError(std::exception_ptr &&error) noexcept = 0;
 };
 
 /**

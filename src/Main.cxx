@@ -143,6 +143,16 @@ Instance::OnDevCachefilesStartCull() noexcept
 		StartCull();
 }
 
+void
+Instance::OnDevCachefilesError(std::exception_ptr &&error) noexcept
+{
+	PrintException(std::move(error));
+
+	/* /dev/cachefiles errors are fatal because we're effectively
+	   defunct now */
+	std::terminate();
+}
+
 inline void
 Instance::Run()
 {
