@@ -7,7 +7,7 @@ cm4all-cash (0.9) unstable; urgency=low
   * fix hang when walking an empty directory
   * systemd: add ext3, btrfs and xfs to RestrictFileSystems
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 13 Apr 2026 17:11:33 +0200
 
 cm4all-cash (0.8) unstable; urgency=low
 
