@@ -5,11 +5,13 @@ gtest = dependency('gtest', main: true,
                    fallback: ['gtest', 'gtest_main_dep'])
 
 test(
-  'TestChdir',
+  'TestCash',
   executable(
-    'TestChdir',
+    'TestCash',
     'TestChdir.cxx',
+    'TestWalk.cxx',
     '../src/Chdir.cxx',
+    '../src/Walk.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
