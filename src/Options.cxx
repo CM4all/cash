@@ -33,7 +33,7 @@ PrintHelp(const char *argv0) noexcept
 		   "Options:\n"
 		   "  -f <configfile>\n"
 		   "\tRead the specified configuration file instead of"
-		   " /etc/cachefiles.conf\n"
+		   " /etc/cachefilesd.conf\n"
 		   "  -v\tPrint version and exit\n",
 		   argv0, argv0);
 }
