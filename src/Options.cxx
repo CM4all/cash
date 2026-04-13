@@ -13,10 +13,12 @@
 #include <string.h>
 #include <unistd.h> // for exit()
 
+using std::string_view_literals::operator""sv;
+
 static void
 PrintVersion() noexcept
 {
-	fmt::print("cm4all-cash version " VERSION "\n");
+	fmt::print("cm4all-cash version " VERSION "\n"sv);
 }
 
 static void
@@ -34,7 +36,7 @@ PrintHelp(const char *argv0) noexcept
 		   "  -f <configfile>\n"
 		   "\tRead the specified configuration file instead of"
 		   " /etc/cachefilesd.conf\n"
-		   "  -v\tPrint version and exit\n",
+		   "  -v\tPrint version and exit\n"sv,
 		   argv0, argv0);
 }
 
@@ -93,7 +95,7 @@ ParseCommandLine(int argc, char **argv) noexcept
 			exit(EXIT_SUCCESS);
 
 		default:
-			fmt::print(stderr, "Unknown commandline option '{}'", optopt);
+			fmt::print(stderr, "Unknown commandline option '{}'"sv, optopt);
 			exit(EXIT_FAILURE);
 		}
 	}
