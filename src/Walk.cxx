@@ -5,6 +5,7 @@
 #include "Walk.hxx"
 #include "WHandler.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
+#include "event/co/Yield.hxx"
 #include "io/DirectoryReader.hxx"
 #include "io/FileAt.hxx"
 #include "io/Open.hxx"
@@ -87,10 +88,10 @@ Walk::StatItem::Run(Uring::Queue &uring_)
 	}
 }
 
-Walk::Walk(Uring::Queue &_uring,
+Walk::Walk(EventLoop &_event_loop, Uring::Queue &_uring,
 	   uint_least64_t _collect_files, std::size_t _collect_bytes,
 	   WalkHandler &_handler)
-	:uring(_uring),
+	:event_loop(_event_loop), uring(_uring),
 	 handler(_handler),
 	 collect_files(_collect_files), collect_bytes(_collect_bytes),
 	 discard_older_than(FileTime{time(nullptr)} - DISCARD_OLDER_THAN)
@@ -163,6 +164,29 @@ Walk::ScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd)
 inline Co::Task<void>
 Walk::CoScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd)
 {
+	do {
+		while (suspend_scan)
+			co_await resume_scan;
+
+		if (const auto now = std::chrono::steady_clock::now(); now >= next_yield) {
+			/* yield every second (i.e. return to
+			   EventLoop) to avoid systemd watchdog
+			   timeouts */
+
+			assert(!suspend_scan);
+			suspend_scan = true;
+
+			co_await Co::Yield{event_loop};
+
+			next_yield = std::chrono::steady_clock::now() + std::chrono::seconds{1};
+
+			assert(suspend_scan);
+			suspend_scan = false;
+
+			resume_scan.ResumeAll();
+		}
+	} while (suspend_scan);
+
 	DirectoryReader r{std::move(fd)};
 	while (const char *name = r.Read()) {
 		if (IsSpecialFilename(name))
@@ -170,8 +194,12 @@ Walk::CoScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd)
 
 		/* throttle if there are too many concurrent statx
                    system calls */
-		while (stat.size() > MAX_STAT) [[unlikely]]
+		while (stat.size() > MAX_STAT) [[unlikely]] {
 			co_await resume_stat;
+
+			while (suspend_scan)
+				co_await resume_scan;
+		}
 
 		auto *item = new StatItem(*this, directory, name);
 		stat.push_back(*item);

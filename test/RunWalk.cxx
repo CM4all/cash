@@ -81,7 +81,7 @@ try {
 
 	Instance instance;
 
-	instance.walk = std::make_unique<Walk>(*instance.event_loop.GetUring(),
+	instance.walk = std::make_unique<Walk>(instance.event_loop, *instance.event_loop.GetUring(),
 					       collect_files, collect_bytes,
 					       instance);
 	instance.walk->Start(OpenDirectory(path));

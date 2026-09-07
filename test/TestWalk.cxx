@@ -58,7 +58,7 @@ TEST(Walk, EmptyRootFinishes)
 	event_loop.EnableUring(16384, IORING_SETUP_SINGLE_ISSUER | IORING_SETUP_COOP_TASKRUN);
 
 	WalkCompletion completion{event_loop};
-	auto walk = std::make_unique<Walk>(*event_loop.GetUring(), 64, 1024 * 1024, completion);
+	auto walk = std::make_unique<Walk>(event_loop, *event_loop.GetUring(), 64, 1024 * 1024, completion);
 	walk->Start(directory);
 
 	event_loop.Run();

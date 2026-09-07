@@ -79,7 +79,7 @@ Cull::Cull(EventLoop &event_loop, Uring::Queue &_uring,
 	   Callback _callback)
 	:uring(_uring), dev_cachefiles(_dev_cachefiles),
 	 callback(_callback),
-	 walk(new Walk(_uring, _cull_files, _cull_bytes, *this)),
+	 walk(new Walk(event_loop, _uring, _cull_files, _cull_bytes, *this)),
 	 chdir(event_loop),
 	 defer_start(event_loop, BIND_THIS_METHOD(OnDeferredStart))
 {

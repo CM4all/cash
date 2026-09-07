@@ -8,11 +8,13 @@
 #include "co/MultiResume.hxx"
 #include "util/IntrusiveList.hxx"
 
+#include <chrono>
 #include <cstdint>
 #include <string>
 
 class FileDescriptor;
 class UniqueFileDescriptor;
+class EventLoop;
 namespace Uring { class Queue; }
 namespace Co { template <typename T> class Task; }
 class WalkHandler;
@@ -24,6 +26,7 @@ class WalkHandler;
  * asynchronously in the #EventLoop (using io_uring).
  */
 class Walk final {
+	EventLoop &event_loop;
 	Uring::Queue &uring;
 
 	WalkHandler &handler;
@@ -37,6 +40,13 @@ class Walk final {
 	 * It will be resumed when enough operations have completed.
 	 */
 	Co::MultiResume resume_stat;
+
+	/**
+	 * Throttles readdir() calls.
+	 */
+	Co::MultiResume resume_scan;
+
+	std::chrono::steady_clock::time_point next_yield{};
 
 	WalkResult result;
 
@@ -60,9 +70,11 @@ class Walk final {
 	 */
 	const FileTime discard_older_than;
 
+	bool suspend_scan = false;
+
 public:
 	[[nodiscard]]
-	Walk(Uring::Queue &_uring,
+	Walk(EventLoop &_event_loop, Uring::Queue &_uring,
 	     std::size_t _collect_files, uint_least64_t _collect_bytes,
 	     WalkHandler &_handler);
 	~Walk() noexcept;
