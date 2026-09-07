@@ -18,7 +18,7 @@ namespace Co { template <typename T> class Task; }
 class WalkHandler;
 
 /**
- * Walk a filesystem tree and collect files that have not been access
+ * Walk a filesystem tree and collect files that have not been accessed
  * for the longest time.  Pass a #WalkHandler to the constructor and
  * call Start() to start the walk operation.  The walk will happen
  * asynchronously in the #EventLoop (using io_uring).
