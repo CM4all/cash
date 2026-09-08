@@ -81,7 +81,7 @@ Walk::StatItem::Run(Uring::Queue &uring_)
 		while (walk.stat.size() > MAX_STAT)
 			co_await walk.resume_stat;
 
-		co_await walk.AddDirectory(*directory, std::move(name));
+		co_await walk.AddDirectory(*directory, name.c_str());
 	} else if (S_ISREG(stx.stx_mode)) {
 		walk.AddFile(*directory, std::move(name), FileTime{stx.stx_atime.tv_sec},
 			     stx.stx_blocks * 512ULL);
@@ -209,11 +209,11 @@ Walk::CoScanDirectory(WalkDirectory &directory, UniqueFileDescriptor &&fd)
 }
 
 inline Co::Task<void>
-Walk::AddDirectory(WalkDirectory &parent, std::string &&name)
+Walk::AddDirectory(WalkDirectory &parent, const char *name)
 try {
 	WalkDirectoryRef directory{
 		WalkDirectoryRef::Adopt{},
-		*new WalkDirectory(uring, parent, co_await Uring::CoOpen(uring, parent.fd, name.c_str(), O_PATH|O_DIRECTORY, 0)),
+		*new WalkDirectory(uring, parent, co_await Uring::CoOpen(uring, parent.fd, name, O_PATH|O_DIRECTORY, 0)),
 	};
 
 	co_await CoScanDirectory(*directory, co_await Uring::CoOpen(uring, directory->fd, ".", O_DIRECTORY, 0));

@@ -93,7 +93,7 @@ public:
 	void Start(FileDescriptor root_fd);
 
 private:
-	Co::Task<void> AddDirectory(WalkDirectory &parent, std::string &&name);
+	Co::Task<void> AddDirectory(WalkDirectory &parent, const char *name);
 	void AddFile(WalkDirectory &parent, std::string &&name,
 		     FileTime atime, uint_least64_t size);
 
