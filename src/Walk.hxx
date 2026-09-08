@@ -42,10 +42,17 @@ class Walk final {
 	Co::MultiResume resume_stat;
 
 	/**
-	 * Throttles readdir() calls.
+	 * Resumes all coroutines that have suspended due to
+	 * #suspend_scan and will be readied by the coroutine that has
+	 * set the #suspend_scan flag after #next_yield was reached.
 	 */
 	Co::MultiResume resume_scan;
 
+	/**
+	 * After this time stamp, all coroutines will suspend and
+	 * control is given back to the #EventLoop; after that, all
+	 * coroutines will be resumed immediately.
+	 */
 	std::chrono::steady_clock::time_point next_yield{};
 
 	WalkResult result;
@@ -70,6 +77,10 @@ class Walk final {
 	 */
 	const FileTime discard_older_than;
 
+	/**
+	 * If true, then all coroutines shall await #resume_scan.  Set
+	 * after #next_yield was reached.
+	 */
 	bool suspend_scan = false;
 
 public:
