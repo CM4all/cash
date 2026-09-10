@@ -3,7 +3,7 @@ cm4all-cash (0.10) unstable; urgency=low
   * fix systemd watchdog timeouts
   * support libfmt 12.2.0
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 10 Sep 2026 09:37:09 +0200
 
 cm4all-cash (0.9) unstable; urgency=low
 
