@@ -2,7 +2,7 @@ cm4all-cash (0.11) unstable; urgency=low
 
   * fix crash on statx() error
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 14 Sep 2026 21:59:17 +0200
 
 cm4all-cash (0.10) unstable; urgency=low
 
