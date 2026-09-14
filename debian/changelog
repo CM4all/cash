@@ -1,6 +1,6 @@
 cm4all-cash (0.11) unstable; urgency=low
 
-  * 
+  * fix crash on statx() error
 
  --   
 
