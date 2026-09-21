@@ -8,6 +8,7 @@
 #include "event/co/Yield.hxx"
 #include "io/DirectoryReader.hxx"
 #include "io/FileAt.hxx"
+#include "io/FileName.hxx" // for IsSpecialFilename()
 #include "io/Open.hxx"
 #include "io/uring/CoOperation.hxx"
 #include "co/InvokeTask.hxx"
@@ -135,13 +136,6 @@ Walk::AddFile(WalkDirectory &parent, std::string &&name,
 
 	while (result.files.size() > collect_files && result.total_bytes > collect_bytes)
 		result.Pop();
-}
-
-[[gnu::pure]]
-static bool
-IsSpecialFilename(const char *s) noexcept
-{
-	return s[0] == '.' && (s[1] == 0 || (s[1] == '.' && s[2] == 0));
 }
 
 inline void
