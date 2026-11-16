@@ -10,6 +10,7 @@
 #include "io/RecursiveDelete.hxx"
 #include "io/Temp.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/ScopeExit.hxx"
 
 #include <gtest/gtest.h>
@@ -58,7 +59,7 @@ TEST(Walk, EmptyRootFinishes)
 	event_loop.EnableUring(16384, IORING_SETUP_SINGLE_ISSUER | IORING_SETUP_COOP_TASKRUN);
 
 	WalkCompletion completion{event_loop};
-	auto walk = std::make_unique<Walk>(event_loop, *event_loop.GetUring(), 64, 1024 * 1024, completion);
+	auto walk = std::make_unique<Walk>(event_loop, *event_loop.GetUring(), 64, 1_MiB, completion);
 	walk->Start(directory);
 
 	event_loop.Run();

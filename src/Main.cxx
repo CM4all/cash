@@ -10,6 +10,7 @@
 #include "io/FileAt.hxx"
 #include "io/Open.hxx"
 #include "io/uring/Queue.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/PrintException.hxx"
 #include "util/SpanCast.hxx"
 #include "config.h"
@@ -97,7 +98,7 @@ inline void
 Instance::StartCull()
 {
 	uint_least64_t cull_files = 0;
-	uint_least64_t cull_bytes = 1024 * 1024;
+	uint_least64_t cull_bytes = 1_MiB;
 
 	struct statvfs s;
 	if (fstatvfs(cache_fd.Get(), &s) == 0) {

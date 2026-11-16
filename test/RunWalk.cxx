@@ -11,6 +11,7 @@
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "time/ISO8601.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/PrintException.hxx"
 #include "util/StringBuffer.hxx"
 
@@ -61,7 +62,7 @@ int
 main(int argc, char **argv) noexcept
 try {
 	const char *path = ".";
-	uint_least64_t collect_files = 64, collect_bytes = 1024 * 1024;
+	uint_least64_t collect_files = 64, collect_bytes = 1_MiB;
 
 	if (argc > 4) {
 		fmt::print(stderr, "Usage: RunWalk [PATH [COLLECT_FILES [COLLECT_BYTES]]]\n");

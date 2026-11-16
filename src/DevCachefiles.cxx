@@ -5,6 +5,7 @@
 #include "DevCachefiles.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/IterableSplitString.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringSplit.hxx"
@@ -30,7 +31,7 @@ DevCachefiles::~DevCachefiles() noexcept
 void
 DevCachefiles::OnDeviceReady([[maybe_unused]] unsigned events) noexcept
 {
-	char buffer[1024];
+	char buffer[1_KiB];
 	ssize_t nbytes = GetFileDescriptor().Read(std::as_writable_bytes(std::span{buffer}));
 	if (nbytes <= 0) {
 		const int e = errno;
