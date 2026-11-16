@@ -1,6 +1,6 @@
 cm4all-cash (0.12) unstable; urgency=low
 
-  * 
+  * fix build failure with libfmt 12.2.0
 
  --   
 

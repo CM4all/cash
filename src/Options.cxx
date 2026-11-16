@@ -7,6 +7,8 @@
 
 #include <fmt/core.h>
 
+#include <string_view>
+
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h> // for EXIT_SUCCESS
