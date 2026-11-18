@@ -68,10 +68,15 @@ Chdir::Next() noexcept
 			i->continuation.resume();
 		});
 	} else {
-		for (auto &i : list)
+		/* move to the stack because resumed waiters may
+		   release their lease, which erases the list (or even
+		   destroys this object) */
+		auto tmp = std::move(list);
+
+		for (auto &i : tmp)
 			i.lease = *this;
 
-		list.clear_and_dispose([](auto *i){
+		tmp.clear_and_dispose([](auto *i){
 			if (i->continuation)
 				i->continuation.resume();
 		});
