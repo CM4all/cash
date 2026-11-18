@@ -78,3 +78,49 @@ TEST(Chdir, FailedDirectoryDoesNotBreakNextWaiter)
 	succeeded.lease = {};
 	event_loop.Run();
 }
+
+TEST(Chdir, AddWhileLeaseHeld)
+{
+	EventLoop event_loop;
+	Chdir chdir{event_loop};
+	WaitResult first, second;
+
+	auto directory = OpenDirectory(".");
+
+	auto first_task = WaitForDirectory(chdir, directory, first);
+	Completion first_completion;
+	first_completion.Start(first_task);
+
+	event_loop.Run();
+
+	ASSERT_TRUE(first_completion.done);
+	ASSERT_TRUE(first.success());
+
+	/* the lease is still held: this one takes the fast path */
+	auto second_task = WaitForDirectory(chdir, directory, second);
+	Completion second_completion;
+	second_completion.Start(second_task);
+
+	EXPECT_TRUE(second_completion.done);
+	EXPECT_FALSE(second_completion.error);
+	EXPECT_TRUE(second.resumed);
+	EXPECT_TRUE(second.success());
+
+	first.lease = {};
+	second.lease = {};
+	event_loop.Run();
+
+	/* the fast path must not have left a stale waiter behind */
+	WaitResult third;
+	auto third_task = WaitForDirectory(chdir, directory, third);
+	Completion third_completion;
+	third_completion.Start(third_task);
+
+	event_loop.Run();
+
+	EXPECT_TRUE(third_completion.done);
+	EXPECT_TRUE(third.success());
+
+	third.lease = {};
+	event_loop.Run();
+}
