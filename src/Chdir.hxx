@@ -41,11 +41,12 @@ class Chdir final : SharedAnchor {
 		explicit Awaitable(Chdir &_parent, List &list) noexcept
 			:parent(_parent)
 		{
-			list.push_back(*this);
-
 			if (parent.current != parent.map.end() &&
 			    &parent.current->second == &list)
-			 	lease = parent;
+				/* already there: grant immediately */
+				lease = parent;
+			else
+				list.push_back(*this);
 		}
 
 		Awaitable(const Awaitable &) = delete;
@@ -53,7 +54,7 @@ class Chdir final : SharedAnchor {
 
 		[[nodiscard]]
 		bool await_ready() const noexcept {
-			assert(is_linked());
+			assert(is_linked() != (bool)lease);
 			assert(!continuation);
 
 			return (bool)lease;
