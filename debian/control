@@ -1,6 +1,6 @@
 Source: cm4all-cash
 Section: otherosfs
-Priority: extra
+Priority: optional
 Maintainer: Max Kellermann <max.kellermann@ionos.com>
 Build-Depends: debhelper-compat (= 13),
  meson (>= 1.2),
