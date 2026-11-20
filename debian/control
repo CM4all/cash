@@ -14,7 +14,7 @@ Build-Depends: debhelper-compat (= 13),
  libsystemd-dev
 Standards-Version: 4.7.4
 Vcs-Browser: https://github.com/CM4all/cash
-Vcs-Git: git://github.com/CM4all/cash
+Vcs-Git: https://github.com/CM4all/cash
 
 Package: cm4all-cash
 Architecture: any
