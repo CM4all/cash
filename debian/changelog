@@ -5,6 +5,7 @@ cm4all-cash (0.12) unstable; urgency=low
   * debian: add source/format file
   * debian: use "debhelper-compat" instead of "debian/compat"
   * debian: add copyright file
+  * debian/control: add missing build-dependency on pkgconf
 
  --   
 

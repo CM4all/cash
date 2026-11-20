@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Max Kellermann <max.kellermann@ionos.com>
 Build-Depends: debhelper-compat (= 13),
  meson (>= 1.2),
+ pkgconf,
  g++ (>= 4:12),
  libc6-dev (>= 2.13),
  libfmt-dev (>= 9),
