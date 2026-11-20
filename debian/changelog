@@ -7,7 +7,7 @@ cm4all-cash (0.12) unstable; urgency=low
   * debian: add copyright file
   * debian/control: add missing build-dependency on pkgconf
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 20 Nov 2026 08:07:34 +0100
 
 cm4all-cash (0.11) unstable; urgency=low
 
